@@ -13,6 +13,6 @@ pip install pprint
 ```
 per far partire il bot eseguire il file botysus.py nella cartella diodo bot.
 ### Comandi implementati
-- /register per iscriversi al bot 
+- /help per ottenere la lista dei comandi supportati (con descrizione)
+- /subscribe per iscriversi al bot, richiede un ID di autenticazione
 - /broadcast per mandare un messaggio a tutti gli utenti sottoscritti al bot
-
