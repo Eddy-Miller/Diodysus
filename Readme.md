@@ -12,7 +12,7 @@ pip install telepot
 pip install pprint
 ```
 per far partire il bot eseguire il file botysus.py nella cartella diodo bot.
-###Comandi implementati
+### Comandi implementati
 - /register per iscriversi al bot 
 - /broadcast per mandare un messaggio a tutti gli utenti sottoscritti al bot
 
