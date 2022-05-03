@@ -58,6 +58,7 @@ def broadcast():
         while line != '':
             bot.sendMessage(line, "changed profile pic :)")
             line=f.readline()
+            
 
 def handle(msg):
     global db
