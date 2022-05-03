@@ -1,7 +1,7 @@
 # Diodysus
 Un progetto che non mi pento di definire BELLO
 ## Telegram Bot 
-inizializzazione dell'ambiente virtuale
+Inizializzazione dell'ambiente virtuale
 ```
 python -m venv bot_env
 source bot_env/bin/activate
