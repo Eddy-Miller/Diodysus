@@ -82,13 +82,14 @@ class ClientTelegram:
 		self.disconnectClient(client=client)
 
 
-# recupero il messaggio da inviare da linea di comando
-# message = sys.argv[1]
+if __name__ == "__main__":
+	# recupero il messaggio da inviare da linea di comando
+	# message = sys.argv[1]
 
-# messaggio già inserito per i test
-message = 'ciao'
+	# messaggio già inserito per i test
+	message = 'ciaooo'
 
-clientTelegram = ClientTelegram(message=message)
+	clientTelegram = ClientTelegram(message=message)
 
 
 
