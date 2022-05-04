@@ -21,8 +21,10 @@ cd my_bot/diodo_bot
 python botysus.py
 ```
 ### Comandi implementati
-- /help per ottenere la lista dei comandi supportati (con descrizione)
+- /help per ottenere la lista dei comandi supportati (con breve descrizione)
+- /register <Admin_ID> <New_ID> <New_Alias> [New_Level] - Per registrare al bot un nuovo utente, a cui saranno assegnati <New_ID> univoco, <New_Alias> e [New_Level]; operazione disponibile solo agli amministratori. Il livello (opzionale e di default 0) indica il ruolo: 2 - Amministratore, 1 - Manutentore, 0 - Guest
 - /subscribe per iscriversi al bot, richiede un ID di autenticazione
+- /users <Admin_ID> - Visualizza tutti gli utenti registrati; operazione disponibile solo agli amministratori
 - /broadcast per mandare un messaggio a tutti gli utenti sottoscritti al bot
 
 ## Telegram Client 
