@@ -78,14 +78,24 @@ class RAM_DataBase:
 
         return outcome
 
-def broadcast():
-    with open("./regFile.txt", "a+") as f:
+def broadcast(message):
+    with open("./regFile.txt", "r") as f:
         f.seek(0)
-        line=f.readline()
+        line = f.readline()
         while line != '':
-            bot.sendMessage(line, "changed profile pic :)")
-            line=f.readline()
+            bot.sendMessage(line, message)
+            line = f.readline()
             
+def multicast(level, message):
+    with open("./regFile.txt", "r") as f:
+        f.seek(0)
+        line = f.readline()
+        while line != '':
+            temp = line.split()
+            print(message)
+            if temp[1] >= level:
+                bot.sendMessage(temp[0], message)
+            line = f.readline()
 
 def handle(msg):
     global db
@@ -109,7 +119,10 @@ def handle(msg):
                        '/subscribe <User_ID> - Per iscriversi al bot e ricevere messaggi; richiede '+\
                            '<User_ID> per verificare l\'autorizzazione\n'+\
                        '/users <Admin_ID> - Visualizza tutti gli utenti registrati; operazione disponibile solo agli amministratori\n'+\
-                       '/broadcast - Invia un messaggio a tutti gli utenti iscritti'
+                       '/broadcast <message> - Invia <message> a tutti gli utenti iscritti\n'+\
+                       '/multicast <User_ID> <level> <message> - Invia <message> a tutti gli utenti iscritti di livello uguale '+\
+                           'o superiore a <level>, specificando l\'utente inviante, che a sua volta deve essere di livello uguale '+\
+                           'o superiore a <level>\n'
 
             bot.sendMessage(chat_id, response)
 
@@ -150,7 +163,9 @@ def handle(msg):
 
             else:
 
-                if len(db.select_id(text[1])) == 0:
+                rows = db.select_id(text[1])
+
+                if len(rows) == 0:
                     response = 'Permission denied.'
                 
                 else:
@@ -158,17 +173,18 @@ def handle(msg):
                         #f.write(os.linesp)
                         #f.write(username)
                         f.seek(0)
-                        line=f.readline()
+                        line = f.readline()
                         isRegistered = False
                         while line != '':
-                            if line == (str(chat_id)+"\n"): 
+                            f_chat_id = line.split()[0]
+                            if f_chat_id == (str(chat_id)+"\n"): 
                                 isRegistered = True
-                            line=f.readline()
+                            line = f.readline()
 
                         if isRegistered == True:
                             response = 'You are already subscribed.'
                         else:
-                            print(chat_id,  file=f)
+                            print(chat_id, rows[0]['level'],  file=f)
                             response = 'You are now subscribed to Diodysus!'
             
             bot.sendMessage(chat_id, response)
@@ -198,7 +214,43 @@ def handle(msg):
 
         ### BROADCAST ###
         elif text[0] == '/broadcast':
-            broadcast()
+
+            if len(text) < 2:
+                response = 'Wrong command syntax.\n'+\
+                           'Usage: /broadcast <message>'
+                bot.sendMessage(chat_id, response)
+
+            else:
+                message = ' '.join(text[1:])
+                broadcast(message)
+        
+        ### MULTICAST ###
+        elif text[0] == '/multicast':
+
+            if len(text) < 4:
+                response = 'Wrong command syntax.\n'+\
+                           'Usage: /multicast <User_ID> <level {0,1,2}> <message>'
+                bot.sendMessage(chat_id, response)
+            
+            else:
+                rows = db.select_id(text[1])
+
+                if len(rows) == 0 or rows[0]['level'] < int(text[2]):
+                        response = 'Permission denied.'
+                        bot.sendMessage(chat_id, response)
+
+                else:
+                    message = 'Messaggio inviato da {} ('.format(rows[0]['alias'])
+                    
+                    if rows[0]['level'] == 2:
+                        message += 'amministratore)\n'
+                    elif rows[0]['level'] == 1:
+                        message += 'manutentore)\n'
+                    else:
+                        message += 'guest)\n'
+
+                    message += ' '.join(text[3:])
+                    multicast(text[2], message)
 
 
 TOKEN = '5311475211:AAH6zgzP7dDxqMmQ-UYhGMT7e-nRPQxXpuE'
