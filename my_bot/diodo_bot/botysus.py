@@ -119,10 +119,10 @@ def handle(msg):
                        '/subscribe <User_ID> - Per iscriversi al bot e ricevere messaggi; richiede '+\
                            '<User_ID> per verificare l\'autorizzazione\n'+\
                        '/users <Admin_ID> - Visualizza tutti gli utenti registrati; operazione disponibile solo agli amministratori\n'+\
-                       '/broadcast <message> - Invia <message> a tutti gli utenti iscritti\n'+\
-                       '/multicast <User_ID> <level> <message> - Invia <message> a tutti gli utenti iscritti di livello uguale '+\
-                           'o superiore a <level>, specificando l\'utente inviante, che a sua volta deve essere di livello uguale '+\
-                           'o superiore a <level>\n'
+                       '/broadcast <Message> - Invia <Message> a tutti gli utenti iscritti\n'+\
+                       '/multicast <User_ID> <Level> <Message> - Invia <Message> a tutti gli utenti iscritti di livello uguale '+\
+                           'o superiore a <Level>, specificando l\'utente inviante, che a sua volta deve essere di livello uguale '+\
+                           'o superiore a <Level>\n'
 
             bot.sendMessage(chat_id, response)
 
