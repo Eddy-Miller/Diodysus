@@ -1,0 +1,10 @@
+Elenco di funzionalità mancanti o desiderate (ampliabile se ritenuto opportuno)
+
+REQUISITI FUNZIONALI
+    - Implementazione comandi per metriche e invio warning (richiede definizione di altre parti del sistema)
+    - Ideazione e realizzazione aggiornamento DB da area sicura
+
+REQUISITI NON FUNZIONALI
+    - Renderlo Daemon e fare keep-alive, con avvio automatico on startup e riavvio in caso di crash
+    - Nuovo log a ogni riavvio OPPURE (preferibile) nuovo log ogni giorno, anche senza riavvio del bot
+    - Miglioramento leggibilità del codice (?)

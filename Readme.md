@@ -1,4 +1,6 @@
 # Diodysus
+NOTA: README da aggiornare in base alle nuove scelte effettuate
+
 Un progetto che non mi pento di definire BELLO
 
 Posizionarsi nella cartella del progetto
