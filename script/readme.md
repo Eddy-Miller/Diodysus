@@ -1,0 +1,1 @@
+In questa cartella si trovano i due script per l'invio e la ricezione dei dati a livello fisico. Abbaimo implementato tre collegamenti diversi. Questi sono via ethernet, seriale e attraverso il sensore dell'infrarosso
