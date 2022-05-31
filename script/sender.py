@@ -1,10 +1,18 @@
+'''
+README:
+Questo script legge i dati dal sensore e li invia tramite UDP su una porta specifica.
+Al momento i dati sono generati casualmente
+IR e seriale non ancora implementate
+'''
+
+
 #import
 import random, socket, os , sys, time
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
 
-msg = { "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
+
 
 #comunication functions
 def ethernet_mode(address,port):
@@ -19,7 +27,7 @@ def ethernet_mode(address,port):
         sock.sendto(msg.encode(), (address, port) )
         print("Sent: {}, to {}:{}".format(msg, address, port))
         #wait for a while
-        time.sleep(1)
+        time.sleep(10)
 
 def serial_mode():
     pass
@@ -29,6 +37,8 @@ def infrared_mode():
 
 #utility functions
 def random_sensor_value():
+    msg = { "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
+
     msg["sensor_value"] = random.randint(0, 100)
     msg["sensor_name"] ="random_value"
 
