@@ -27,7 +27,7 @@ def ethernet_mode(ethernet_address,ethernet_port):
         #send message
         msg = str(msg)
         sock.sendto(msg.encode(), (ethernet_address, ethernet_port) )
-        print("Sent: {}, to {}:{}".format(msg, ethernet_address, pethernet_portort))
+        print("Sent: {}, to {}:{}".format(msg, ethernet_address, ethernet_port))
         #wait for a while
         time.sleep(10)
 
@@ -42,6 +42,7 @@ def serial_mode():
     counter=0
     while 1: 
         ser.write(str.encode(f'{counter}\n'))
+        print(counter)
         time.sleep(1) 
         counter += 1
 
@@ -60,8 +61,8 @@ def random_sensor_value():
 def main():
 
     #ip address and port for ethernet mode
-    ethernet_address = "localhost"
-    ethernet_port = 5555
+    ethernet_address = "192.168.10.12"
+    ethernet_port = 50000
 
 
     #check number of arguments equal to 2
