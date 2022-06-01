@@ -98,6 +98,7 @@ def main():
     #ip address and port for ethernet mode
     ethernet_address = "192.168.10.12" #must set server ip address because this raspberry have two ip address. One for internet connection and the second is for connection with raspbian_a
     ethernet_port = 50000
+    
 
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
