@@ -8,6 +8,8 @@ IR e seriale non ancora implementate
 
 #import
 import random, socket, os , sys, time
+import time
+import serial
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
@@ -15,7 +17,7 @@ MODE_LIST = ["ethernet", "serial", "infrared"]
 
 
 #comunication functions
-def ethernet_mode(address,port):
+def ethernet_mode(ethernet_address,ethernet_port):
     #UDP socket setup
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
@@ -24,13 +26,25 @@ def ethernet_mode(address,port):
         msg = random_sensor_value()
         #send message
         msg = str(msg)
-        sock.sendto(msg.encode(), (address, port) )
-        print("Sent: {}, to {}:{}".format(msg, address, port))
+        sock.sendto(msg.encode(), (ethernet_address, ethernet_port) )
+        print("Sent: {}, to {}:{}".format(msg, ethernet_address, ethernet_port))
         #wait for a while
         time.sleep(10)
 
 def serial_mode():
-    pass
+    ser = serial.Serial(
+        port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
+        baudrate = 9600,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS
+    )
+    counter=0
+    while 1: 
+        ser.write(str.encode(f'{counter}\n'))
+        print(counter)
+        time.sleep(1) 
+        counter += 1
 
 def infrared_mode():
     pass
@@ -45,6 +59,12 @@ def random_sensor_value():
     return msg
 
 def main():
+
+    #ip address and port for ethernet mode
+    ethernet_address = "192.168.10.12"
+    ethernet_port = 50000
+
+
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
         print("Usage: python sender.py <mode>\nMode can be: ethernet, serial or infrared")
@@ -60,7 +80,7 @@ def main():
 
     #execute the current mode
     if(mode == "ethernet"):
-        ethernet_mode("localhost", 5555)
+        ethernet_mode(ethernet_address, ethernet_port)
     elif(mode == "serial"):
         serial_mode()
     elif(mode == "infrared"):

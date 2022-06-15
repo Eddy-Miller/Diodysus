@@ -14,6 +14,10 @@ anche se si connette un solo client quindi può andare bene anche così
 #import
 import random, socket, os , sys, time, json, requests
 
+import time
+import serial
+
+
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
 
@@ -24,12 +28,12 @@ tb_address = "localhost"
 
 
 #comunication functions
-def ethernet_mode(port):
+def ethernet_mode(ethernet_address, ethernet_port):
     #UDP server socket setup
     serversock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     #binding
-    serversock.bind(('localhost', port))
-    print("UDP server up and listening on port: {}\nCTRL+C to stop".format(port))
+    serversock.bind((ethernet_address, ethernet_port))
+    print("UDP server up and listening on ethernet_port: {}\nCTRL+C to stop".format(ethernet_port))
 
     #listening
     while True:
@@ -49,7 +53,18 @@ def ethernet_mode(port):
 
 
 def serial_mode():
-    pass
+    ser = serial.Serial(
+        port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
+        baudrate = 9600,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS
+    )
+
+    while 1:
+        x=ser.readline()  #readline
+        print(x)
+        time.sleep(1)
 
 def infrared_mode():
     pass
@@ -79,6 +94,12 @@ def rest_to_thingboard(token,message):
 
 
 def main():
+
+    #ip address and port for ethernet mode
+    ethernet_address = "192.168.10.12" #must set server ip address because this raspberry have two ip address. One for internet connection and the second is for connection with raspbian_a
+    ethernet_port = 50000
+    
+
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
         print("Usage: python sender.py <mode>\nMode can be: ethernet, serial or infrared")
@@ -90,11 +111,11 @@ def main():
         sys.exit(1)
     
     mode = sys.argv[1]
-    print("Hello World - I'm the sender in mode: " + mode)
+    print("Hello World - I'm the receiver in mode: " + mode)
 
     #execute the current mode
     if(mode == "ethernet"):
-        ethernet_mode(5555)
+        ethernet_mode(ethernet_address, ethernet_port)
     elif(mode == "serial"):
         serial_mode()
     elif(mode == "infrared"):
