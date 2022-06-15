@@ -18,6 +18,8 @@ try:
     if http_response.status_code == 200:
         print(f"send data to ThingsBoard: {data_json}")
         sleep(10)
+    else:
+        print("ERRORE HTTP")
 except requests.exceptions.ConnectionError as e:
  print("Request Exception", e)
 except KeyboardInterrupt:
