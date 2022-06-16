@@ -2,7 +2,8 @@
 README:
 Questo script legge i dati dal sensore e li invia tramite UDP su una porta specifica.
 Al momento i dati sono generati casualmente
-IR e seriale non ancora implementate
+I token sono letti dal file token.txt (non sincronizzato con GIT)
+IR non ancora implementate
 '''
 
 
@@ -10,9 +11,12 @@ IR e seriale non ancora implementate
 import random, socket, os , sys, time
 import time
 import serial
+import csv
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
+#dictionary with token:sensor_name entry (load from file token.txt)
+token_dict = {}
 
 
 
@@ -51,18 +55,37 @@ def infrared_mode():
 
 #utility functions
 def random_sensor_value():
-    msg = { "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
+    msg = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
 
+    tokenList = list(token_dict.keys())
+    token = random.choice(tokenList)
+
+    msg["sensor_token"] = token
     msg["sensor_value"] = random.randint(0, 100)
-    msg["sensor_name"] ="random_value"
+    msg["sensor_name"] = token_dict[token]
 
     return msg
+
+#return a dictionary with "token":"sensor_name" entry based on file token.txt (but it's a CSV file)
+#token is the first column of the CSV file with column token,sensor_name
+def load_token_dict_from_file():
+    with open('token.txt') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        print("Sensors list:")
+        for row in csv_reader:
+            token_dict[row[0]] = row[1]
+            print(f'\tSensor token: {row[0]} Sensor Name: {row[1]}')
+    return token_dict
+
 
 def main():
 
     #ip address and port for ethernet mode
-    ethernet_address = "192.168.10.12"
+    ethernet_address = "localhost"
     ethernet_port = 50000
+
+    #reading token list from file
+    token_dict = load_token_dict_from_file()
 
 
     #check number of arguments equal to 2

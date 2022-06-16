@@ -15,6 +15,7 @@ anche se si connette un solo client quindi può andare bene anche così
 import random, socket, os , sys, time, json, requests
 
 import time
+from time import sleep
 import serial
 
 
@@ -32,7 +33,7 @@ def ethernet_mode(ethernet_address, ethernet_port):
     #UDP server socket setup
     serversock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     #binding
-    serversock.bind((ethernet_address, ethernet_port))
+    serversock.bind(("0.0.0.0", ethernet_port))
     print("UDP server up and listening on ethernet_port: {}\nCTRL+C to stop".format(ethernet_port))
 
     #listening
@@ -47,9 +48,14 @@ def ethernet_mode(ethernet_address, ethernet_port):
         #replace ' with " in msg (for json.loads)
         message =message.replace("\'", '\"')
         message_json = json.loads(message)
-
+        
+        #reading thingboard token and remove it's key from the message
+        token = message_json["sensor_token"]
+        del message_json["sensor_token"]
+        del message_json["sensor_name"]
+        
         #send JSON to Thingsboard with HTTP REST API (using the utility function)
-        #TODO
+        rest_to_thingboard(token,message_json)
 
 
 def serial_mode():
@@ -71,24 +77,25 @@ def infrared_mode():
 
 #utility functions
 def rest_to_thingboard(token,message):
-    #NON TESTATE
-    url = f"{tb_protocol}://{tb_address}:{tb_port}/api/v1/{token}/telemetry"
-
-    header = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-
     
+    #url building and HTTP header settings
+    url = f"{tb_protocol}://{tb_address}:{tb_port}/api/v1/{token}/telemetry"
+    header = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+   
     try:
-        #sending POST request
-        http_response = requests.post(url=url,data=message,headers=header)
-
-        if http_response.status_code == 200:
-            print(f"send data to ThingsBoard: {message}")
-          
-        
+        while True:
+            #JSON conversion
+            data_json = json.dumps(message)
+            #HTTP request
+            http_response = requests.post(url=url,data=data_json,headers=header)
+            
+            if http_response.status_code == 200:
+                print(f"send data to ThingsBoard: {data_json}")
+                return 0
     except requests.exceptions.ConnectionError as e:
         print("Request Exception", e)
     except KeyboardInterrupt:
-        pass
+     pass
     except Exception as e:
         print("General Exception: ", e)
 
