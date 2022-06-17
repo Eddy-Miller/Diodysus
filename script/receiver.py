@@ -52,7 +52,7 @@ def ethernet_mode(ethernet_address, ethernet_port):
         #reading thingboard token and remove it's key from the message
         token = message_json["sensor_token"]
         del message_json["sensor_token"]
-        del message_json["sensor_name"]
+       
         
         #send JSON to Thingsboard with HTTP REST API (using the utility function)
         rest_to_thingboard(token,message_json)
