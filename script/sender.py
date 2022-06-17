@@ -55,7 +55,7 @@ def infrared_mode():
 
 #utility functions
 def random_sensor_value():
-    msg = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
+    msg = {"sensor_token":"token_placeholder", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
 
     tokenList = list(token_dict.keys())
     token = random.choice(tokenList)
