@@ -43,3 +43,5 @@ Installazione delle dipendenze necessarie
 pip3 install telebot
 pip3 install telethon
 ```
+##Thingsboard
+TODO: rest api payload capire come fare e come gestire la numerosita 
