@@ -68,8 +68,8 @@ def serial_mode():
     )
 
     while 1:
-        x=ser.readline()  #readline
-        print(x)
+        msg=ser.readline()  #readline
+        print(msg)
         time.sleep(1)
 
 def infrared_mode():

@@ -43,12 +43,12 @@ def serial_mode():
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS
     )
-    counter=0
+    msg = random_sensor_value()
+    msg = str(msg)
     while 1: 
-        ser.write(str.encode(f'{counter}\n'))
-        print(counter)
-        time.sleep(1) 
-        counter += 1
+        ser.write(str.encode(f'{msg}\n'))
+        print("Sent message: " + msg)
+        time.sleep(1)
 
 def infrared_mode():
     pass
