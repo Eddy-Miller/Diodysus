@@ -51,12 +51,12 @@ TODO: rest api payload capire come fare e come gestire la numerosita
 
 Pi_a
 - nome_host: raspberrypiA
-- nome: pi_a
+- nome utente: pi_a
 - password: AdminPi_a
 - eth0: 192.168.10.11
 
 Pi_b
 - nome_host: raspberrypiB
-- nome: pi_b
+- nome utente: pi_b
 - password: AdminPi_b
 - eth0: 192.168.10.12
