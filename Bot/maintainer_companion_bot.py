@@ -15,9 +15,18 @@ import signal
 from sys import exit
 from hashlib import pbkdf2_hmac
 
+from flask import Flask
+from flask_restful import Resource, Api, reqparse
+
+import requests
+
 ##############################
 #   INITIALIZATION
 ##############################
+
+app = Flask(__name__)
+api = Api(app)
+
 
 # Enable logging
 logging.basicConfig(
@@ -42,8 +51,67 @@ USERNAME, PASSWORD = range(2)
 # Enum states for broadcast conversation handler
 FORWARD_MESSAGE = range(1)
 
+# Dictionary to save level 2 alerts: "deviceName":"NumberOfAlerts(NoA)". Whern NoA reaches 3, remove device from dictionary
+LEVEL_2_ALERTS = dict()
+
+# Bot authorization token
+BOT_TOKEN = "5367789080:AAGVQ-CC1YFSif5pni6c_n4tK0LTJD8TIBE"
+
+# Setting for password hashing
 SALT = b'?\x9a\xcbnx\x14\x1b \xb7\x19\x1d\x90\xf8\xcd\x93&'
 ITERATIONS = 1000
+
+##############################
+#   CLASSES
+##############################
+
+# Class for REST resource
+class Alerts(Resource):
+    def post(self):
+        # Initialize parser
+        parser = reqparse.RequestParser()
+        
+        # Add args
+        parser.add_argument('text', required=True)
+        
+        # Parse arguments to dictionary
+        args = parser.parse_args() 
+        
+        # Send alert to all logged devices
+        global telegram_db
+
+        message = args['text']
+        message_words = message.split()
+        level = message_words[1]
+        device_name = message_words[4]
+
+        # Add level 2 alert to dictionary, or remove device and send message
+        if level == '2':
+            # Device not yet in dictionary
+            if LEVEL_2_ALERTS.get(device_name) == None:
+                LEVEL_2_ALERTS[device_name] = 1
+            # Device already in dictionary
+            else:
+                LEVEL_2_ALERTS[device_name] = LEVEL_2_ALERTS.get(device_name) + 1
+
+            # Send message only if device has sent 3 level 2 alerts
+            if LEVEL_2_ALERTS.get(device_name) == 3:
+                LEVEL_2_ALERTS.pop(device_name)
+            else:
+                return 200
+
+        
+        # Sends text to all logged users
+        active_chats = telegram_db.get_chats()
+
+        for chat in active_chats:
+            api_url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={chat['chat_id']}&text={message}"
+            requests.get(api_url)
+
+        log = f"Alert: {message}"
+        logger.warning(log)
+        
+        return 200  # 200 OK
 
 # Class for creation and interaction with RAM DataBase
 class RAM_DataBase:
@@ -56,7 +124,7 @@ class RAM_DataBase:
 
         try:
             if not os.path.exists(path):
-                raise FileNotFoundError("'{}' not found".format(path))
+                raise FileNotFoundError(f"'{path}' not found")
                 
             con = sqlite3.connect(path)
         
@@ -74,11 +142,11 @@ class RAM_DataBase:
             self.con.row_factory = sqlite3.Row
 
         except Exception as e:
-            logger.critical("Unable to load '{}' in RAM. Exception raised: {}".format(self.path, e))
+            logger.critical(f"Unable to load '{self.path}' in RAM. Exception raised: {e}")
             logger.info("Shutting Down...\n")
             exit(-1)
 
-        logger.info("Successfully loaded '{}' in RAM".format(self.path))
+        logger.info(f"Successfully loaded '{self.path}' in RAM")
 
     ### Telegram Users Functions
     # Returns True if username and password hash correspond to existing user
@@ -183,7 +251,7 @@ def start(update: Update, context: CallbackContext):
     first_name = user.first_name
     last_name = user.last_name
     message = update.message.text
-    log = "'{}' from {} (Username: {} - Last name: {} - First name: {})".format(message, id, username, last_name, first_name)
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -216,7 +284,7 @@ def help(update: Update, context: CallbackContext):
     first_name = user.first_name
     last_name = user.last_name
     message = update.message.text
-    log = "'{}' from {} (Username: {} - Last name: {} - First name: {})".format(message, id, username, last_name, first_name)
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -247,8 +315,7 @@ def login(update: Update, context: CallbackContext):
     first_name = user.first_name
     last_name = user.last_name
     message = update.message.text
-    log = "'{}' from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(message, id, username, last_name, first_name)
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -289,10 +356,10 @@ def logout(update: Update, context: CallbackContext):
         first_name = user.first_name
         last_name = user.last_name
         message = update.message.text
-        log = "'{}' from {} (Username: {} - Last name: {} - First name: {})".format(message, id, username, last_name, first_name)
+        log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
         if exception != None:
-            logger.error(log + " raised exception {}".format(exception))
+            logger.error(log + f" raised exception {exception}")
         else:
             logger.warning(log)
 
@@ -335,8 +402,7 @@ def broadcast(update: Update, context: CallbackContext):
     first_name = user.first_name
     last_name = user.last_name
     message = update.message.text
-    log = "'{}' from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(message, id, username, last_name, first_name)
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -351,7 +417,7 @@ def unknown(update: Update, context: CallbackContext):
 
     # Sends reply text
     update.message.reply_text(
-        "Unrecognized command '{}'. Type /help for a list of all available commands.".format(update.message.text)
+        f"Unrecognized command '{update.message.text}'. Type /help for a list of all available commands."
     )
 
     # Retrieves useful infos for logging purposes and creates log message
@@ -361,8 +427,7 @@ def unknown(update: Update, context: CallbackContext):
     first_name = user.first_name
     last_name = user.last_name
     message = update.message.text
-    log = "Unrecognized '{}' from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(message, id, username, last_name, first_name)
+    log = f"Unrecognized '{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -384,8 +449,7 @@ def cancel(update: Update, context: CallbackContext):
     username = user.username
     first_name = user.first_name
     last_name = user.last_name
-    log = "Procedure cancelled from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(id, username, last_name, first_name)
+    log = f"Procedure cancelled from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
 
@@ -409,8 +473,7 @@ def username(update: Update, context: CallbackContext):
     username = user.username
     first_name = user.first_name
     last_name = user.last_name
-    log = "Login procedure: received username from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(id, username, last_name, first_name)
+    log = f"Login procedure: received username from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
     
@@ -477,14 +540,12 @@ def password(update: Update, context: CallbackContext):
         context_username = context.user_data["username"]
 
         if logged:
-            log = "Login procedure: access granted to {} for user '{}' (Username: {} - Last name: {} - First name: {})"\
-                    .format(id, context_username, username, last_name, first_name)
+            log = f"Login procedure: access granted to {id} for user '{context_username}' (Username: {username} - Last name: {last_name} - First name: {first_name})"
         else:
-            log = "Login procedure: access denied to {} for user '{}' (Username: {} - Last name: {} - First name: {})"\
-                    .format(id, context_username, username, last_name, first_name)
+            log = f"Login procedure: access denied to {id} for user '{context_username}' (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
         if exception != None:
-            logger.error(log + " raised exception {}".format(exception))
+            logger.error(log + f" raised exception {exception}")
         else:
             if logged:
                 logger.info(log)
@@ -513,8 +574,7 @@ def forward_message(update: Update, context: CallbackContext):
     username = user.username
     first_name = user.first_name
     last_name = user.last_name
-    log = "Broadcast: message '{}' from {} (Username: {} - Last name: {} - First name: {})"\
-            .format(message, id, username, last_name, first_name)
+    log = f"Broadcast: message '{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
 
     logger.info(log)
     
@@ -533,9 +593,12 @@ def main():
 
     telegram_db = RAM_DataBase("telegram.db")
 
+    # Initializes API resource path 
+    api.add_resource(Alerts, '/alerts')
+
     # Initializes bot t.me/maintainer_companion_bot
     logger.info("Starting...")
-    updater = Updater("5367789080:AAGVQ-CC1YFSif5pni6c_n4tK0LTJD8TIBE", use_context=True)
+    updater = Updater(BOT_TOKEN, use_context=True)
 
     # Initializes conversation handlers
     login_handler = ConversationHandler(
@@ -568,6 +631,9 @@ def main():
     # Run the bot until the user presses Ctrl-C
     logger.info("Listening...")
     updater.start_polling()
+
+    # Run REST API
+    app.run(host='0.0.0.0', port=5000)  # togliere 0.0.0.0 per non renderlo visibile dall'esterno
 
 
 if __name__ == "__main__":

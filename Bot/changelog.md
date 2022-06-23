@@ -1,5 +1,9 @@
 # Maintainer Companion Bot
 
+## **1.0.0 (Receiver)**
+### *[2022-06-23]*
+Bot now supports interaction with ThingsBoard, sending to all logged users Level 1 (Major) Alerts when received and Level 2 (Minor) Alerts when the same device sends 3 of them. Note that Telegram doesn't support remove invocation of Bot's Commands, therefore a basic REST API is made with Flask to receive POST request at http://host:5000/alerts, where the payload is the text of the alert message to be forwarded. 
+
 ## **0.5.0 (Standalone)**
 ### *[2022-05-15]*
 First functioning version of the Bot (available [here](t.me/maintainer_companion_bot)). Independent from external sources, has a limited number of supported commands.

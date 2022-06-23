@@ -1,10 +1,15 @@
 Elenco di funzionalità mancanti o desiderate (ampliabile se ritenuto opportuno)
 
 REQUISITI FUNZIONALI
-    - Implementazione comandi per metriche e invio warning (richiede definizione di altre parti del sistema)
+    - Implementazione comandi per metriche
     - Ideazione e realizzazione aggiornamento DB da area sicura
 
 REQUISITI NON FUNZIONALI
     - Renderlo Daemon e fare keep-alive, con avvio automatico on startup e riavvio in caso di crash
     - Nuovo log a ogni riavvio OPPURE (preferibile) nuovo log ogni giorno, anche senza riavvio del bot
     - Miglioramento leggibilità del codice (?)
+
+NB: 
+    - Telegram non supporta chiamate a comandi dall'esterno, per cui è necessario esporre una REST API custom
+    - I sensori devono avere "deviceName" e "deviceType" nei metadata e "value" come chiave della misurazione
+    - Va cambiato l'IP (magari funziona localhost, nel caso togliere 0.0.0.0 in flask) nella chiamata alla REST API del bot telegram una volta sul RASP
