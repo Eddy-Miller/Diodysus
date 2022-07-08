@@ -14,9 +14,14 @@ anche se si connette un solo client quindi può andare bene anche così
 #import
 import random, socket, os , sys, time, json, requests
 
-import time
+import time, csv
 from time import sleep
 import serial
+from curses import keyname
+from piir.io import receive
+from piir.decode import decode
+
+from piir.prettify import prettify
 
 
 #global variable and costants
@@ -27,9 +32,23 @@ tb_protocol = "http"
 tb_port = "8080"
 tb_address = "localhost"
 
+#return a dictionary with "token":"sensor_name" entry based on file token.txt (but it's a CSV file)
+#token is the first column of the CSV file with column token,sensor_name
+token_dict = {}
+
+def load_token_dict_from_file():
+    with open('token.txt') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        print("Sensors list:")
+        for row in csv_reader:
+            token_dict[row[0]] = row[1]
+            print(f'\tSensor token: {row[0]} Sensor Name: {row[1]}')
+    return token_dict
+
 
 #comunication functions
 def ethernet_mode(ethernet_address, ethernet_port):
+    print("ethernet mode")
     #UDP server socket setup
     serversock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     #binding
@@ -59,6 +78,7 @@ def ethernet_mode(ethernet_address, ethernet_port):
 
 
 def serial_mode():
+    print("serial mode")
     ser = serial.Serial(
         port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
         baudrate = 9600,
@@ -73,7 +93,22 @@ def serial_mode():
         time.sleep(1)
 
 def infrared_mode():
-    pass
+    print("infrared mode")
+    keys = {}
+    token_dict = load_token_dict_from_file()
+
+    while True:
+        data = decode(receive(22))
+        if data:
+            keys['keyname'] = data
+
+            #print (keys['keyname'])
+
+            prettified_data =prettify(keys)
+            #print (prettified_data["keys"]['keyname'])
+            hex_data = prettified_data["keys"]['keyname']
+            string_name = bytes.fromhex(hex_data).decode('utf-8')
+            print(string_name)
 
 #utility functions
 def rest_to_thingboard(token,message):

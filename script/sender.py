@@ -8,10 +8,11 @@ IR non ancora implementate
 
 
 #import
+from asyncio import sleep
 import random, socket, os , sys, time
 import time
 import serial
-import csv
+import csv, piir
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
@@ -51,7 +52,21 @@ def serial_mode():
         counter += 1
 
 def infrared_mode():
-    pass
+    remote = piir.Remote('light.json', 17)
+
+    k = 0
+    while(k < 10):
+        #input_data = input('Inserire testo da inviare: ')
+        #remote.send_data(bytes(input_data, 'utf-8'))
+        #print('Inviato: ' + input_data)
+
+        k += 1
+        msg = random_sensor_value()
+        msg_to_send = str(msg["sensor_name"]) + "," + str(msg["sensor_value"])
+        print(str(k) + ":  " + str(msg_to_send))
+        #remote.send_data(bytes(msg_to_send["sensor_token"], 'utf-8'))
+        remote.send_data(bytes(msg_to_send, 'utf-8'))
+        time.sleep(5)
 
 #utility functions
 def random_sensor_value():
