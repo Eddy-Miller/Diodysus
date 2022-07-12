@@ -23,6 +23,9 @@ token_dict = {}
 
 #comunication functions
 def ethernet_mode(ethernet_address,ethernet_port):
+    print("Ethernet mode - using plain one-way UDP")
+    print("Press Ctrl+C to exit")
+    
     #UDP socket setup
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
@@ -37,6 +40,10 @@ def ethernet_mode(ethernet_address,ethernet_port):
         time.sleep(10)
 
 def serial_mode():
+    print("Serial mode - using serial module")
+    print("Press Ctrl+C to exit")
+
+    #instantiate a Serial object, used for sending data to the serial port
     ser = serial.Serial(
         port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
         baudrate = 9600,
@@ -44,6 +51,7 @@ def serial_mode():
         stopbits=serial.STOPBITS_ONE,
         bytesize=serial.EIGHTBITS
     )
+
     counter=0
     while 1: 
         ser.write(str.encode(f'{counter}\n'))
@@ -51,19 +59,23 @@ def serial_mode():
         time.sleep(1) 
         counter += 1
 
+
 def infrared_mode():
+    print("Infrared mode - reliability not guaranteed")
+    print("WARNING: IR hardware must used in dark environment")
+    print("Press Ctrl+C to exit")
+    #instantiate the piir class and start the loop (at the moment we don't know what light.json file is)
     remote = piir.Remote('light.json', 17)
 
-    k = 0
-    while(k < 10):
-        #input_data = input('Inserire testo da inviare: ')
-        #remote.send_data(bytes(input_data, 'utf-8'))
-        #print('Inviato: ' + input_data)
+    #TODO DA TESTARE SE POSSIBILE INVIARE TOKEN IN AMBIENTE CON POCHE INTERFERENZE
 
-        k += 1
+    while True:
+        #read the sensor value
         msg = random_sensor_value()
+
+        #create the message to send (in string format)
         msg_to_send = str(msg["sensor_name"]) + "," + str(msg["sensor_value"])
-        print(str(k) + ":  " + str(msg_to_send))
+        print(msg)
         #remote.send_data(bytes(msg_to_send["sensor_token"], 'utf-8'))
         remote.send_data(bytes(msg_to_send, 'utf-8'))
         time.sleep(5)

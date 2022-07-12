@@ -48,7 +48,8 @@ def load_token_dict_from_file():
 
 #comunication functions
 def ethernet_mode(ethernet_address, ethernet_port):
-    print("ethernet mode")
+    print("Ethernet mode - using plain one-way UDP")
+    print("Press Ctrl+C to exit")
     #UDP server socket setup
     serversock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     #binding
@@ -78,6 +79,9 @@ def ethernet_mode(ethernet_address, ethernet_port):
 
 
 def serial_mode():
+    print("Serial mode - using serial module")
+    print("Press Ctrl+C to exit")
+
     print("serial mode")
     ser = serial.Serial(
         port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
@@ -93,7 +97,11 @@ def serial_mode():
         time.sleep(1)
 
 def infrared_mode():
-    print("infrared mode")
+    print("Infrared mode - reliability not guaranteed")
+    print("WARNING: IR hardware must used in dark environment")
+    print("Press Ctrl+C to exit")
+
+    
     keys = {}
     token_dict = load_token_dict_from_file()
 
