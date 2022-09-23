@@ -91,10 +91,23 @@ def serial_mode():
         bytesize=serial.EIGHTBITS
     )
 
-    while 1:
-        x=ser.readline()  #readline
+    while True:
+        x=ser.readline().decode("utf-8")  #readline (i wish that readline return an econoded UTF-8 string)
         print(x)
-        time.sleep(1)
+        
+        print("Received: {}".format(message))
+        
+        #convert in JSON
+        #replace ' with " in msg (for json.loads)
+        message =message.replace("\'", '\"')
+        message_json = json.loads(message)
+        
+        #reading thingboard token and remove it's key from the message
+        token = message_json["sensor_token"]
+        del message_json["sensor_token"]
+       
+        #send JSON to Thingsboard with HTTP REST API (using the utility function)
+        rest_to_thingboard(token,message_json)
 
 def infrared_mode():
     print("Infrared mode - reliability not guaranteed")

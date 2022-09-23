@@ -52,12 +52,17 @@ def serial_mode():
         bytesize=serial.EIGHTBITS
     )
 
-    counter=0
-    while 1: 
-        ser.write(str.encode(f'{counter}\n'))
-        print(counter)
+    while True:
+        #reading data from the sensors
+        msg = random_sensor_value()
+        #encoding message
+        msg = str(msg) + "\n"
+        msg = msg.encode("utf-8")
+        #send message
+        ser.write(str.encode(f'{msg}'))
+        print("Sent: {}".format(msg))
+        #wait for a while
         time.sleep(1) 
-        counter += 1
 
 
 def infrared_mode():
