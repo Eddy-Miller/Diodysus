@@ -1,5 +1,16 @@
 # Maintainer Companion Bot
 
+## **2.0.0 (Maintainer)**
+### *[2022-09-27]*
+Bot now supports two new maintainer level commands to enable an on-demand visualization of some telemetries or alarms.
+
+**Maintainer Level**
+```
+/get_telemetry - Returns all telemetry gathered by the selected device in the last month
+
+/get_alarm - Returns last 100 alarms of the selected level, or 300 alrams of all levels
+```
+
 ## **1.0.0 (Receiver)**
 ### *[2022-06-23]*
 Bot now supports interaction with ThingsBoard, sending to all logged users Level 1 (Major) Alerts when received and Level 2 (Minor) Alerts when the same device sends 3 of them. Note that Telegram doesn't support remove invocation of Bot's Commands, therefore a basic REST API is made with Flask to receive POST request at http://host:5000/alerts, where the payload is the text of the alert message to be forwarded. 

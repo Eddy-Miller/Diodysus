@@ -1,5 +1,8 @@
 from telegram.update import Update
 
+from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardRemove
+
 from telegram.ext import Updater
 from telegram.ext import CallbackContext
 from telegram.ext import CommandHandler
@@ -19,10 +22,17 @@ from flask import Flask
 from flask_restful import Resource, Api, reqparse
 
 import requests
+import time
+import datetime
 
 ##############################
 #   INITIALIZATION
 ##############################
+
+# Milliseconds in a month
+MONTH_MS = 2629800000
+# Milliseconds in a year
+
 
 app = Flask(__name__)
 api = Api(app)
@@ -47,6 +57,12 @@ ADMIN, MAINTAINER, OBSERVER = range(1, 3+1)
 
 # Enum states for login conversation handler
 USERNAME, PASSWORD = range(2)
+
+# Enum states for telemetry conversation handler
+CHOOSING_DEVICE = range(1)
+
+# Enum states for alarms conversation handler
+CHOOSING_LEVEL = range(1)
 
 # Enum states for broadcast conversation handler
 FORWARD_MESSAGE = range(1)
@@ -271,7 +287,8 @@ def help(update: Update, context: CallbackContext):
             /logout - Stop receiving notifications from the bot\n\n"+\
 
         "MAINTAINER COMMADS\n\
-            /placeholder\n\n"+\
+            /get_telemetry - Get last month's telemetry of selected device\n\
+            /get_alarms - Get last 100 alarms of selected level (or last 300 of all levels)\n\n"+\
 
         "ADMIN COMMANDS\n\
             /broadcast - Sends a message to all logged users\n\n"  
@@ -362,6 +379,139 @@ def logout(update: Update, context: CallbackContext):
             logger.error(log + f" raised exception {exception}")
         else:
             logger.warning(log)
+
+# GET_TELEMETRY - Entry point for device telemetry request (function only availabale for mantainers or higher)
+def get_telemetry(update: Update, context: CallbackContext):
+    global telegram_db
+    can_proceed = True
+
+    chat_id = update.message.chat.id
+
+    # If chat_id doesn't exist, user is not logged and can't perform operation
+    if not telegram_db.check_chat(chat_id):
+        # Sends reply text
+        update.message.reply_text(
+            "You must be logged with /login to perform this operation."   
+        )
+
+        can_proceed = False
+
+    else:
+        # If logged user is not an administrator, end conversation
+        if telegram_db.get_user(telegram_db.get_chat(chat_id)["username"])["level"] == OBSERVER :
+            # Sends reply text
+            update.message.reply_text(
+                "Permission denied."   
+            )
+
+            can_proceed = False
+
+        else:
+            # Get authorization token
+            url = 'http://localhost:9090/api/auth/login'
+            body = {
+                    "username": "tenant@thingsboard.org",
+                    "password": "tenant"
+                    }
+
+            response = requests.post(url, json = body)
+            token = response.json()["token"]   
+
+            # Get tenant's devices
+            url = 'http://localhost:9090/api/tenant/devices?pageSize=100&page=0'
+
+            response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
+
+            # Create reply keyboard with devices names
+            reply_keyboard = []
+            for device in response.json()["data"]:
+                reply_keyboard.append([device["name"]])
+            reply_keyboard.append(["Exit"])
+            
+            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+            # Sends reply text
+            update.message.reply_text(
+                "Please select a device.",
+                reply_markup = markup
+            )
+
+    # Retrieves useful infos for logging purposes and creates log message
+    user = update.message.from_user
+    id = user.id
+    username = user.username
+    first_name = user.first_name
+    last_name = user.last_name
+    message = update.message.text
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
+
+    logger.info(log)
+
+    # Advance conversation to returned state
+    if can_proceed:
+        return CHOOSING_DEVICE
+    else:
+        return ConversationHandler.END 
+
+# GET_ALARMS - Entry point for alarms request (function only availabale for mantainers or higher)
+def get_alarms(update: Update, context: CallbackContext):
+    global telegram_db
+    can_proceed = True
+
+    chat_id = update.message.chat.id
+
+    # If chat_id doesn't exist, user is not logged and can't perform operation
+    if not telegram_db.check_chat(chat_id):
+        # Sends reply text
+        update.message.reply_text(
+            "You must be logged with /login to perform this operation."   
+        )
+
+        can_proceed = False
+
+    else:
+        # If logged user is not an administrator, end conversation
+        if telegram_db.get_user(telegram_db.get_chat(chat_id)["username"])["level"] == OBSERVER :
+            # Sends reply text
+            update.message.reply_text(
+                "Permission denied."   
+            )
+
+            can_proceed = False
+
+        else: 
+
+            # Create reply keyboard with alarm levels
+            reply_keyboard = [["Level 1: Major"],
+                              ["Level 2: Minor"],
+                              ["Level 3: Warning"],
+                              ["All Levels"],
+                              ["Exit"]]
+            
+            markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+
+            # Sends reply text
+            update.message.reply_text(
+                "Please select a level.",
+                reply_markup = markup
+            )
+
+    # Retrieves useful infos for logging purposes and creates log message
+    user = update.message.from_user
+    id = user.id
+    username = user.username
+    first_name = user.first_name
+    last_name = user.last_name
+    message = update.message.text
+    log = f"'{message}' from {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
+
+    logger.info(log)
+
+    # Advance conversation to returned state
+    if can_proceed:
+        return CHOOSING_LEVEL
+    else:
+        return ConversationHandler.END 
 
 # BROADCAST - Entry point for broadcast messaging (function only available for administrators)
 def broadcast(update: Update, context: CallbackContext):
@@ -555,6 +705,144 @@ def password(update: Update, context: CallbackContext):
         # End conversation
         return ConversationHandler.END
 
+
+# Sends telemetry data of the chosen device
+def choosing_device(update: Update, context: CallbackContext):
+    # Get user selection
+    choice = update.message.text
+    context.user_data["choice"] = choice
+    if choice == "Exit":
+        update.message.reply_text("Procedure cancelled.", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
+    # Get authorization token
+    url = 'http://localhost:9090/api/auth/login'
+    body = {
+            "username": "tenant@thingsboard.org",
+            "password": "tenant"
+            }
+
+    response = requests.post(url, json = body)
+    token = response.json()["token"]   
+
+    # Get device telemetry
+    url = f'http://localhost:9090/api/tenant/devices?deviceName={choice}'
+    response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
+    id = response.json()["id"]["id"]
+
+
+    current_time_ms = int(time.time()*1000)
+    one_month_ago = current_time_ms - MONTH_MS
+    url = f'http://localhost:9090/api/plugins/telemetry/DEVICE/{id}/values/timeseries?keys=value&startTs={one_month_ago}&endTs={current_time_ms}'
+    response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
+    
+    # Create and send reply text
+    reply_text = "Fetched telemetry:\n"
+    for telemetry in response.json()["value"]:
+        reply_text += str(datetime.datetime.fromtimestamp(telemetry["ts"] / 1000))
+        reply_text += ': ' + str(telemetry["value"]) + '\n'
+
+    update.message.reply_text(reply_text, reply_markup=ReplyKeyboardRemove())
+
+    # Retrieves useful infos for logging purposes and creates log message
+    user = update.message.from_user
+    id = user.id
+    username = user.username
+    first_name = user.first_name
+    last_name = user.last_name
+    log = f"Telemetry from '{choice}' for {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
+
+    logger.info(log)
+
+    # Advance conversation to returned state
+    return ConversationHandler.END
+
+# Sends alarms of the chosen level
+def choosing_level(update: Update, context: CallbackContext):
+    # Get user selection
+    choice = update.message.text
+    context.user_data["choice"] = choice
+    if choice == "Exit":
+        update.message.reply_text("Procedure cancelled.", reply_markup=ReplyKeyboardRemove())
+        return ConversationHandler.END
+
+    # Get authorization token
+    url = 'http://localhost:9090/api/auth/login'
+    body = {
+            "username": "tenant@thingsboard.org",
+            "password": "tenant"
+            }
+
+    response = requests.post(url, json = body)
+    token = response.json()["token"]   
+
+    # Get alarms
+
+    url = f'http://localhost:9090/api/alarms?pageSize=300&page=0&sortOrder=DESC&sortProperty=createdTime'
+    response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
+
+    reply_text = "Fetched alarms:\n"
+
+    print(response.json())
+
+    count = 0
+    for alarm in response.json()["data"]:
+        if count >= 100:
+            break
+        if choice == "Level 1: Major":
+            if alarm["severity"] == "MAJOR":
+                reply_text += '\n' + str(datetime.datetime.fromtimestamp(alarm["createdTime"] / 1000)) + '\n'
+                reply_text += 'Alarm ID: ' + str(alarm["id"]["id"]) + '\n'
+                reply_text += 'Originator ID: ' + str(alarm["originator"]["id"]) + '\n'
+                reply_text += 'Value: ' + str(alarm["details"]["value"]) + '\n'
+            count += 1
+
+        elif choice == "Level 2: Minor":
+            if count >= 100:
+                break
+            if alarm["severity"] == "MINOR":
+                reply_text += '\n' + str(datetime.datetime.fromtimestamp(alarm["createdTime"] / 1000)) + '\n'
+                reply_text += 'Alarm ID: ' + str(alarm["id"]["id"]) + '\n'
+                reply_text += 'Originator ID: ' + str(alarm["originator"]["id"]) + '\n'
+                reply_text += 'Value: ' + str(alarm["details"]["value"]) + '\n'
+            count += 1
+
+        elif choice == "Level 3: Warning":
+            if count >= 100:
+                break
+            if alarm["severity"] == "WARNING":
+                reply_text += '\n' + str(datetime.datetime.fromtimestamp(alarm["createdTime"] / 1000)) + '\n'
+                reply_text += 'Alarm ID: ' + str(alarm["id"]["id"]) + '\n'
+                reply_text += 'Originator ID: ' + str(alarm["originator"]["id"]) + '\n'
+                reply_text += 'Value: ' + str(alarm["details"]["value"]) + '\n'
+            count += 1
+
+        else:
+            if count >= 300:
+                break
+            reply_text += '\n' + str(datetime.datetime.fromtimestamp(alarm["createdTime"] / 1000)) + '\n'
+            reply_text += 'Alarm ID: ' + str(alarm["id"]["id"]) + '\n'
+            reply_text += 'Severity: ' + str(alarm["severity"]) + '\n'
+            reply_text += 'Originator ID: ' + str(alarm["originator"]["id"]) + '\n'
+            reply_text += 'Value: ' + str(alarm["details"]["value"]) + '\n'
+            count += 1
+    
+    # Create and send reply text
+    update.message.reply_text(reply_text, reply_markup=ReplyKeyboardRemove())
+
+    # Retrieves useful infos for logging purposes and creates log message
+    user = update.message.from_user
+    id = user.id
+    username = user.username
+    first_name = user.first_name
+    last_name = user.last_name
+    log = f"Telemetry from '{choice}' for {id} (Username: {username} - Last name: {last_name} - First name: {first_name})"
+
+    logger.info(log)
+
+    # Advance conversation to returned state
+    return ConversationHandler.END
+
 # Sends broadcast message to all logged users
 def forward_message(update: Update, context: CallbackContext):
     global telegram_db
@@ -610,6 +898,22 @@ def main():
         fallbacks=[CommandHandler('cancel', cancel)],
     )
 
+    telemetry_handler = ConversationHandler(
+        entry_points=[CommandHandler('get_telemetry', get_telemetry)],
+        states={
+            CHOOSING_DEVICE: [MessageHandler(Filters.text & (~Filters.command), choosing_device)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
+    alarm_handler = ConversationHandler(
+        entry_points=[CommandHandler('get_alarms', get_alarms)],
+        states={
+            CHOOSING_LEVEL: [MessageHandler(Filters.text & (~Filters.command), choosing_level)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+
     broadcast_handler = ConversationHandler(
         entry_points=[CommandHandler('broadcast', broadcast)],
         states={
@@ -624,6 +928,8 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('logout', logout))
 
     updater.dispatcher.add_handler(login_handler)
+    updater.dispatcher.add_handler(telemetry_handler)
+    updater.dispatcher.add_handler(alarm_handler)
     updater.dispatcher.add_handler(broadcast_handler)
 
     updater.dispatcher.add_handler(MessageHandler(Filters.command, unknown))

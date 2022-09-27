@@ -1,7 +1,7 @@
 Elenco di funzionalità mancanti o desiderate (ampliabile se ritenuto opportuno)
 
 REQUISITI FUNZIONALI
-    - Implementazione comandi per metriche
+    - Implementazione comandi per metriche e allarmi (100 di livello 1,2 e 3, 300 misti)
     - Ideazione e realizzazione aggiornamento DB da area sicura
 
 REQUISITI NON FUNZIONALI
