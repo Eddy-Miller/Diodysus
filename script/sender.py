@@ -59,7 +59,7 @@ def serial_mode():
         msg = str(msg) + "\n"
         msg = msg.encode("utf-8")
         #send message
-        ser.write(str.encode(f'{msg}'))
+        ser.write(msg)
         print("Sent: {}".format(msg))
         #wait for a while
         time.sleep(1) 
