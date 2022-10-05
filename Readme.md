@@ -5,6 +5,10 @@ Un progetto che non mi pento di definire BELLO
 
 Posizionarsi nella cartella del progetto
 
+SERIALE FUNZIONALITA' TESTATE: 100%
+
+//TODO: testing eth e infra 
+
 ## Telegram Bot @diodysusbot
 Inizializzazione dell'ambiente virtuale per il bot telegram
 ```
