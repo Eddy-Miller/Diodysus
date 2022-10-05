@@ -82,7 +82,6 @@ def serial_mode():
     print("Serial mode - using serial module")
     print("Press Ctrl+C to exit")
 
-    print("serial mode")
     ser = serial.Serial(
         port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
         baudrate = 9600,
@@ -93,8 +92,8 @@ def serial_mode():
 
     while True:
         x=ser.readline().decode("utf-8")  #readline (i wish that readline return an econoded UTF-8 string)
-        print(x)
         
+        message=x
         print("Received: {}".format(message))
         
         #convert in JSON
@@ -105,9 +104,11 @@ def serial_mode():
         #reading thingboard token and remove it's key from the message
         token = message_json["sensor_token"]
         del message_json["sensor_token"]
+
+        #print(message_json)
        
         #send JSON to Thingsboard with HTTP REST API (using the utility function)
-        rest_to_thingboard(token,message_json)
+        rest_to_thingboard(token,message_json) 
 
 def infrared_mode():
     print("Infrared mode - reliability not guaranteed")
