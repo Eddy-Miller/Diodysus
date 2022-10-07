@@ -1,0 +1,272 @@
+{
+  "ruleChain": {
+    "additionalInfo": {
+      "description": ""
+    },
+    "name": "diodysus_v2",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null
+  },
+  "metadata": {
+    "firstNodeIndex": 8,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 679,
+          "layoutY": 503
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "level_3_telegram_alert",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\ndetails.alertLevel = \"3\";\ndetails.value = msg.value;\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarm_ts:${ts}",
+          "severity": "WARNING",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1036,
+          "layoutY": 331
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "Telegram Message",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "var newMsg = {};\nnewMsg.text = \n            \"LEVEL \"+msg.details.alertLevel+\" ALARM\\n\"+\n            \"Device: \"+metadata.deviceName+\" (type: \"+metadata.deviceType+\")\\n\"+\n            \"Value: \"+msg.details.value;\n\nreturn {msg: newMsg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "Ricordarsi di modificare l'IP con quello del dispositivo su cui è in esecuzione il Bot Telegram (ifconfig)",
+          "layoutX": 1156,
+          "layoutY": 203
+        },
+        "type": "org.thingsboard.rule.engine.rest.TbRestApiCallNode",
+        "name": "Telegram Call",
+        "debugMode": true,
+        "configuration": {
+          "restEndpointUrlPattern": "http://172.20.218.48:5000/alerts",
+          "requestMethod": "POST",
+          "useSimpleClientHttpFactory": false,
+          "ignoreRequestBody": false,
+          "enableProxy": false,
+          "useSystemProxyProperties": false,
+          "proxyScheme": "http",
+          "proxyHost": "localhost",
+          "proxyPort": 5000,
+          "proxyUser": null,
+          "proxyPassword": null,
+          "readTimeoutMs": 0,
+          "maxParallelRequestsCount": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "useRedisQueueForMsgPersistence": false,
+          "trimQueue": false,
+          "maxQueueSize": 0,
+          "credentials": {
+            "type": "anonymous"
+          }
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "Controllo sul bot per il numero di messaggi di fila",
+          "layoutX": 672,
+          "layoutY": 400
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "level_2_telegram_alert",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\ndetails.alertLevel = \"2\";\ndetails.value = msg.value;\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarm_ts:${ts}",
+          "severity": "MINOR",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 777,
+          "layoutY": 623
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "clear_alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmType": "General Alarm",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\n\nreturn details;"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 333,
+          "layoutY": 459
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsSwitchNode",
+        "name": "alert_switch",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (metadata.deviceName.startsWith(\"temperature\")) {\r\n    \r\n    if (msg.value > 100)\r\n        return ['Level 1: Major'];\r\n    else if (msg.value > 50)\r\n        return ['Level 2: Minor'];\r\n    else if (msg.value > 30)\r\n        return ['Level 3: Warning'];\r\n\r\n} else if (metadata.deviceName.startsWith(\"humidity\")) {\r\n    \r\n    if (msg.value > 100)\r\n        return ['Level 1: Major'];\r\n    else if (msg.value > 50)\r\n        return ['Level 2: Minor'];\r\n    else if (msg.value > 30)\r\n        return ['Level 3: Warning'];\r\n\r\n} else if (metadata.deviceName.startsWith(\"winelevel\")) {\r\n    \r\n    if (msg.value > 100)\r\n        return ['Level 1: Major'];\r\n    else if (msg.value > 50)\r\n        return ['Level 2: Minor'];\r\n    else if (msg.value > 30)\r\n        return ['Level 3: Warning'];\r\n}\r\n    \r\nreturn ['Clear'];"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 550,
+          "layoutY": 210
+        },
+        "type": "org.thingsboard.rule.engine.flow.TbRuleChainOutputNode",
+        "name": "Invia a Rasp B",
+        "debugMode": false,
+        "configuration": {
+          "version": 0
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 674,
+          "layoutY": 300
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "level_1_telegram_alert",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    //remove prevAlarmDetails from metadata\n    //delete metadata.prevAlarmDetails;\n    //now metadata is the same as it comes IN this rule node\n}\n\ndetails.alertLevel = \"1\";\ndetails.value = msg.value;\nreturn details;",
+          "useMessageAlarmData": false,
+          "overwriteAlarmDetails": false,
+          "alarmType": "Alarm_ts:${ts}",
+          "severity": "MAJOR",
+          "propagate": false,
+          "relationTypes": [],
+          "propagateToOwner": false,
+          "propagateToTenant": false,
+          "dynamicSeverity": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 285,
+          "layoutY": 159
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "mts",
+        "debugMode": false,
+        "configuration": {
+          "version": 0
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 204,
+          "layoutY": 316
+        },
+        "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
+        "name": "sts",
+        "debugMode": false,
+        "configuration": {
+          "defaultTTL": 0,
+          "skipLatestPersistence": false,
+          "useServerTs": false
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 1,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 1,
+        "type": "Updated"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 7,
+        "type": "Level 1: Major"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 4,
+        "type": "Clear"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 3,
+        "type": "Level 2: Minor"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 0,
+        "type": "Level 3: Warning"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 1,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 1,
+        "type": "Updated"
+      },
+      {
+        "fromIndex": 8,
+        "toIndex": 9,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 5,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 6,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 9,
+        "toIndex": 6,
+        "type": "Failure"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}
