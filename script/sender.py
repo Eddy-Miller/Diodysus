@@ -13,6 +13,10 @@ import random, socket, os , sys, time
 import time
 import serial
 import csv, piir
+from pickle import TRUE
+import RPi.GPIO as GPIO
+import time
+import Adafruit_DHT as dht
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
@@ -20,6 +24,76 @@ MODE_LIST = ["ethernet", "serial", "infrared"]
 token_dict = {}
 
 
+def createMessage():
+    humidity, temperature = readDHT22()
+    msgDHT22_temperature = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_temperature": "sensor_value_placeholder" }
+    msgDHT22_temperature["sensor_name"] = "DHT22"
+    msgDHT22_temperature["sensor_value"] = temperature
+
+    msgDHT22_humidity = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_humidity": "sensor_value_placeholder" }
+    msgDHT22_humidity["sensor_name"] = "DHT22"
+    msgDHT22_humidity["sensor_value"] = humidity
+
+    msgDistance = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
+    msgDistance["sensor_name"] = "Distance"
+    msgDistance["sensor_value"] = readDistance()
+
+    return msgDHT22_temperature, msgDHT22_humidity, msgDistance
+
+
+
+#definire la funzione per il sensore di temperatura e umidità
+def readDHT22():
+    print("Function readDHT22")
+    #definire il pin del sensore
+    DHT22_pin = 12 #GPIO12
+    #definire il tipo di sensore
+    DHT22_sensor = dht.DHT22
+    print("Reading DHT22")
+    humidity,temperature = dht.read_retry(DHT22_sensor, DHT22_pin)
+
+    if humidity is not None and temperature is not None:
+        print("Temp={0:0.1f}*C  Humidity={1:0.1f}%".format(temperature, humidity))
+    else:
+        print("Failed to retrieve data from humidity sensor")
+    
+    return humidity, temperature
+        
+
+def readDistance():
+    try:
+        GPIO.setmode(GPIO.BCM)
+
+        PIN_TRIGGER = 13
+        PIN_ECHO = 26
+
+        GPIO.setup(PIN_TRIGGER, GPIO.OUT)
+        GPIO.setup(PIN_ECHO, GPIO.IN)
+
+        GPIO.output(PIN_TRIGGER, GPIO.LOW)
+
+        print("Calculating distance")        
+
+        GPIO.output(PIN_TRIGGER, GPIO.HIGH)
+
+        time.sleep(0.00001)
+
+        GPIO.output(PIN_TRIGGER, GPIO.LOW)
+
+        while GPIO.input(PIN_ECHO)==0:
+                #print("ECHO = 0")
+            pulse_start_time = time.time()
+        while GPIO.input(PIN_ECHO)==1:
+                #print("ECHO = 1")
+            pulse_end_time = time.time()
+
+        pulse_duration = pulse_end_time - pulse_start_time
+        distance = round(pulse_duration * 17150, 2)
+        print ("Distance: ",distance," cm")
+
+        return distance
+    finally:
+        GPIO.cleanup()
 
 #comunication functions
 def ethernet_mode(ethernet_address,ethernet_port):
@@ -113,7 +187,7 @@ def load_token_dict_from_file():
 def main():
 
     #ip address and port for ethernet mode
-    ethernet_address = "localhost"
+    ethernet_address = "192.168.10.12" #the local ip address of the receiver
     ethernet_port = 50000
 
     #reading token list from file
