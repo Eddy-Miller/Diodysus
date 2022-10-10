@@ -25,17 +25,19 @@ token_dict = {}
 
 
 def createMessage():
+    #read DHT22
     humidity, temperature = readDHT22()
     msgDHT22_temperature = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_temperature": "sensor_value_placeholder" }
-    msgDHT22_temperature["sensor_name"] = "DHT22"
+    msgDHT22_temperature["sensor_name"] = "DHT22_temperature"
     msgDHT22_temperature["sensor_value"] = temperature
 
     msgDHT22_humidity = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_humidity": "sensor_value_placeholder" }
-    msgDHT22_humidity["sensor_name"] = "DHT22"
+    msgDHT22_humidity["sensor_name"] = "DHT22_humidity"
     msgDHT22_humidity["sensor_value"] = humidity
 
+    #read distance
     msgDistance = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
-    msgDistance["sensor_name"] = "Distance"
+    msgDistance["sensor_name"] = "distance"
     msgDistance["sensor_value"] = readDistance()
 
     return msgDHT22_temperature, msgDHT22_humidity, msgDistance
@@ -45,9 +47,9 @@ def createMessage():
 #definire la funzione per il sensore di temperatura e umidità
 def readDHT22():
     print("Function readDHT22")
-    #definire il pin del sensore
+    #definire il pin del sensore DHT22
     DHT22_pin = 12 #GPIO12
-    #definire il tipo di sensore
+    #definire il tipo di sensore DHT22
     DHT22_sensor = dht.DHT22
     print("Reading DHT22")
     humidity,temperature = dht.read_retry(DHT22_sensor, DHT22_pin)
@@ -60,25 +62,35 @@ def readDHT22():
     return humidity, temperature
         
 
+def setupGPIO(PIN_TRIGGER, PIN_ECHO):
+    GPIO.setmode(GPIO.BCM)
+
+    GPIO.setup(PIN_TRIGGER, GPIO.OUT)
+    GPIO.setup(PIN_ECHO, GPIO.IN)
+
+    GPIO.output(PIN_TRIGGER, GPIO.LOW)
+
+    GPIO.output(PIN_TRIGGER, GPIO.HIGH)
+
+    time.sleep(0.00001)
+
+    GPIO.output(PIN_TRIGGER, GPIO.LOW)
+
+    print("Waiting for sensor to settle")
+
+    time.sleep(2)
+    
+
 def readDistance():
     try:
-        GPIO.setmode(GPIO.BCM)
-
-        PIN_TRIGGER = 13
+        PIN_TRIGGER = 16
         PIN_ECHO = 26
+        
 
-        GPIO.setup(PIN_TRIGGER, GPIO.OUT)
-        GPIO.setup(PIN_ECHO, GPIO.IN)
-
-        GPIO.output(PIN_TRIGGER, GPIO.LOW)
+        pulse_start_time = 0
+        pulse_end_time = 0
 
         print("Calculating distance")        
-
-        GPIO.output(PIN_TRIGGER, GPIO.HIGH)
-
-        time.sleep(0.00001)
-
-        GPIO.output(PIN_TRIGGER, GPIO.LOW)
 
         while GPIO.input(PIN_ECHO)==0:
                 #print("ECHO = 0")
@@ -93,7 +105,8 @@ def readDistance():
 
         return distance
     finally:
-        GPIO.cleanup()
+        print("Read done")
+        #GPIO.cleanup()
 
 #comunication functions
 def ethernet_mode(ethernet_address,ethernet_port):
@@ -105,11 +118,23 @@ def ethernet_mode(ethernet_address,ethernet_port):
     
     while True:
         #reading data from the sensors
-        msg = random_sensor_value()
+        msgDHT22_temperature, msgDHT22_humidity, msgDistance = createMessage()
+        
+        #encoding message
+        msgDHT22_temperature = str(msgDHT22_temperature) + "\n"
+        msgDHT22_humidity = str(msgDHT22_humidity) + "\n"
+        msgDistance = str(msgDistance) + "\n"
+
         #send message
-        msg = str(msg)
-        sock.sendto(msg.encode(), (ethernet_address, ethernet_port) )
-        print("Sent: {}, to {}:{}".format(msg, ethernet_address, ethernet_port))
+        sock.sendto(msgDHT22_temperature.encode(), (ethernet_address, ethernet_port) )
+        sock.sendto(msgDHT22_humidity.encode(), (ethernet_address, ethernet_port) )
+        sock.sendto(msgDistance.encode(), (ethernet_address, ethernet_port) )
+        print("Sent: {}, to {}:{}".format(msgDHT22_temperature, ethernet_address, ethernet_port))
+        time.sleep(1)
+        print("Sent: {}, to {}:{}".format(msgDHT22_humidity, ethernet_address, ethernet_port))
+        time.sleep(1)
+        print("Sent: {}, to {}:{}".format(msgDistance, ethernet_address, ethernet_port))
+
         #wait for a while
         time.sleep(10)
 
@@ -128,15 +153,30 @@ def serial_mode():
 
     while True:
         #reading data from the sensors
-        msg = random_sensor_value()
+        msgDHT22_temperature, msgDHT22_humidity, msgDistance = createMessage()
+
         #encoding message
-        msg = str(msg) + "\n"
-        msg = msg.encode("utf-8")
+        msgDHT22_temperature = str(msgDHT22_temperature) + "\n"
+        msgDHT22_humidity = str(msgDHT22_humidity) + "\n"
+        msgDistance = str(msgDistance) + "\n"
+        msgDHT22_temperature = msgDHT22_temperature.encode()
+        msgDHT22_humidity = msgDHT22_humidity.encode()
+        msgDistance = msgDistance.encode()
+
         #send message
-        ser.write(msg)
-        print("Sent: {}".format(msg))
+        ser.write(msgDHT22_temperature)
+        ser.write(msgDHT22_humidity)
+        ser.write(msgDistance)
+
+        #print message sent
+        print("Sent: {}".format(msgDHT22_temperature))
+        time.sleep(1)
+        print("Sent: {}".format(msgDHT22_humidity))
+        time.sleep(1)
+        print("Sent: {}".format(msgDistance))
+
         #wait for a while
-        time.sleep(1) 
+        time.sleep(10) 
 
 
 def infrared_mode():
@@ -149,14 +189,38 @@ def infrared_mode():
     #TODO DA TESTARE SE POSSIBILE INVIARE TOKEN IN AMBIENTE CON POCHE INTERFERENZE
 
     while True:
-        #read the sensor value
-        msg = random_sensor_value()
+        #reading data from the sensors
+        msgDHT22_temperature, msgDHT22_humidity, msgDistance = createMessage()
 
-        #create the message to send (in string format)
-        msg_to_send = str(msg["sensor_name"]) + "," + str(msg["sensor_value"])
-        print(msg)
-        #remote.send_data(bytes(msg_to_send["sensor_token"], 'utf-8'))
-        remote.send_data(bytes(msg_to_send, 'utf-8'))
+        #send messages
+        #temperture dictionary
+        remote.send_data(bytes(msgDHT22_temperature["sensor_token"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(msgDHT22_temperature["sensor_name"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(str(msgDHT22_temperature["sensor_value"]), 'utf-8'))
+        time.sleep(0.5)
+        print("Sent: {}".format(msgDHT22_temperature))
+
+        #humidity dictionary
+        remote.send_data(bytes(msgDHT22_humidity["sensor_token"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(msgDHT22_humidity["sensor_name"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(str(msgDHT22_humidity["sensor_value"]), 'utf-8'))
+        time.sleep(0.5)
+        print("Sent: {}".format(msgDHT22_humidity))
+
+        #distance dictionary
+        remote.send_data(bytes(msgDistance["sensor_token"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(msgDistance["sensor_name"], 'utf-8'))
+        time.sleep(0.5)
+        remote.send_data(bytes(str(msgDistance["sensor_value"]), 'utf-8'))
+        time.sleep(0.5)
+        print("Sent: {}".format(msgDistance))
+
+        #wait for a while
         time.sleep(5)
 
 #utility functions
@@ -193,6 +257,8 @@ def main():
     #reading token list from file
     token_dict = load_token_dict_from_file()
 
+    
+
 
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
@@ -213,7 +279,14 @@ def main():
     elif(mode == "serial"):
         serial_mode()
     elif(mode == "infrared"):
-        infrared_mode()
+        #setup the GPIO
+        PIN_TRIGGER = 16
+        PIN_ECHO = 26
+        try:
+            setupGPIO(PIN_TRIGGER, PIN_ECHO)
+            infrared_mode()
+        finally:
+            GPIO.cleanup()
     
 
 
