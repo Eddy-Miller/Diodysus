@@ -41,7 +41,7 @@ def load_token_dict_from_file():
         csv_reader = csv.reader(csv_file, delimiter=',')
         print("Sensors list:")
         for row in csv_reader:
-            token_dict[row[0]] = row[1]
+            token_dict[row[1]] = row[0]
             print(f'\tSensor token: {row[0]} Sensor Name: {row[1]}')
     return token_dict
 
@@ -55,6 +55,10 @@ def ethernet_mode(ethernet_address, ethernet_port):
     #binding
     serversock.bind(("0.0.0.0", ethernet_port))
     print("UDP server up and listening on ethernet_port: {}\nCTRL+C to stop".format(ethernet_port))
+
+    #Reading sensor token from file
+    keys = {}
+    token_dict = load_token_dict_from_file()
 
     #listening
     while True:
@@ -81,6 +85,9 @@ def ethernet_mode(ethernet_address, ethernet_port):
 def serial_mode():
     print("Serial mode - using serial module")
     print("Press Ctrl+C to exit")
+
+    keys = {}
+    token_dict = load_token_dict_from_file()
 
     ser = serial.Serial(
         port='/dev/ttyS0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
@@ -112,25 +119,51 @@ def serial_mode():
 
 def infrared_mode():
     print("Infrared mode - reliability not guaranteed")
-    print("WARNING: IR hardware must used in dark environment")
+    print("WARNING: IR hardware must not be used under direct sunlight")
     print("Press Ctrl+C to exit")
 
     
     keys = {}
     token_dict = load_token_dict_from_file()
-
+    cont = 0
+    error = False
     while True:
-        data = decode(receive(22))
-        if data:
-            keys['keyname'] = data
+        try:
+           
+            data = decode(receive(22))
+            if data:
+                cont = cont + 1
 
-            #print (keys['keyname'])
 
-            prettified_data =prettify(keys)
-            #print (prettified_data["keys"]['keyname'])
-            hex_data = prettified_data["keys"]['keyname']
-            string_name = bytes.fromhex(hex_data).decode('utf-8')
-            print(string_name)
+                keys['keyname'] = data
+
+                #print (keys['keyname'])
+
+                prettified_data =prettify(keys)
+                #print (prettified_data["keys"]['keyname'])
+                hex_data = prettified_data["keys"]['keyname']
+                string_name = bytes.fromhex(hex_data).decode('utf-8')
+                if cont == 0:
+                    sensorToken = string_name
+                if cont == 1 :
+                    sensorName = string_name
+                if cont == 2 :
+                    sensorValue = string_name
+                print(string_name)
+            #Creazione del JSON
+            msg = {"sensorName": sensorName, "sensorValue": sensorValue, "sensorToken": token_dict[sensorName]}
+            print("Messagge received successully!")
+            print(msg)
+
+            #send JSON to Thingsboard with HTTP REST API (using the utility function)
+            #reading thingboard token and remove it's key from the message
+            token = msg["sensor_token"]
+            del msg["sensor_token"]
+            #rest_to_thingboard(token,msg)
+        except Exception as e:
+            print("Error: {}".format(e))
+            print("Message not received")
+            continue
 
 #utility functions
 def rest_to_thingboard(token,message):
