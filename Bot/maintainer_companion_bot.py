@@ -31,7 +31,6 @@ import datetime
 
 # Milliseconds in a month
 MONTH_MS = 2629800000
-# Milliseconds in a year
 
 
 app = Flask(__name__)
@@ -782,8 +781,6 @@ def choosing_level(update: Update, context: CallbackContext):
     response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
 
     reply_text = "Fetched alarms:\n"
-
-    print(response.json())
 
     count = 0
     for alarm in response.json()["data"]:
