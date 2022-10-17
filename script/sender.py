@@ -17,6 +17,7 @@ from pickle import TRUE
 import RPi.GPIO as GPIO
 import time
 import Adafruit_DHT as dht
+import hashlib
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
@@ -68,13 +69,7 @@ def setupGPIO(PIN_TRIGGER, PIN_ECHO):
     GPIO.setup(PIN_TRIGGER, GPIO.OUT)
     GPIO.setup(PIN_ECHO, GPIO.IN)
 
-    GPIO.output(PIN_TRIGGER, GPIO.LOW)
-
-    GPIO.output(PIN_TRIGGER, GPIO.HIGH)
-
-    time.sleep(0.00001)
-
-    GPIO.output(PIN_TRIGGER, GPIO.LOW)
+    
 
     print("Waiting for sensor to settle")
 
@@ -86,6 +81,13 @@ def readDistance():
         PIN_TRIGGER = 16
         PIN_ECHO = 26
         
+        GPIO.output(PIN_TRIGGER, GPIO.LOW)
+
+        GPIO.output(PIN_TRIGGER, GPIO.HIGH)
+
+        time.sleep(0.00001)
+
+        GPIO.output(PIN_TRIGGER, GPIO.LOW)
 
         pulse_start_time = 0
         pulse_end_time = 0
@@ -93,10 +95,10 @@ def readDistance():
         print("Calculating distance")        
 
         while GPIO.input(PIN_ECHO)==0:
-                #print("ECHO = 0")
+            print("ECHO = 0")
             pulse_start_time = time.time()
         while GPIO.input(PIN_ECHO)==1:
-                #print("ECHO = 1")
+            print("ECHO = 1")
             pulse_end_time = time.time()
 
         pulse_duration = pulse_end_time - pulse_start_time
@@ -273,20 +275,23 @@ def main():
     mode = sys.argv[1]
     print("Hello World - I'm the sender in mode: " + mode)
 
-    #execute the current mode
-    if(mode == "ethernet"):
-        ethernet_mode(ethernet_address, ethernet_port)
-    elif(mode == "serial"):
-        serial_mode()
-    elif(mode == "infrared"):
-        #setup the GPIO
+
+    #set pin
+    try:
+        #setup the GPIO pins
         PIN_TRIGGER = 16
         PIN_ECHO = 26
-        try:
-            setupGPIO(PIN_TRIGGER, PIN_ECHO)
+        setupGPIO(PIN_TRIGGER, PIN_ECHO)
+
+        #execute the current mode
+        if(mode == "ethernet"):
+            ethernet_mode(ethernet_address, ethernet_port)
+        elif(mode == "serial"):
+            serial_mode()
+        elif(mode == "infrared"):
             infrared_mode()
-        finally:
-            GPIO.cleanup()
+    finally:
+        GPIO.cleanup()
     
 
 
