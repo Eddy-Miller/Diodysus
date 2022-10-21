@@ -19,10 +19,18 @@ import time
 import Adafruit_DHT as dht
 import hashlib
 
+
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
 #dictionary with token:sensor_name entry (load from file token.txt)
 token_dict = {}
+#distacne sensor config
+PIN_TRIGGER = 13
+PIN_ECHO = 26
+#infared pin config
+INFRARED_PIN = 17
+#DHT22 spin config
+PIN_DHT22 = 12
 
 
 def createMessage():
@@ -37,9 +45,10 @@ def createMessage():
     msgDHT22_humidity["sensor_value"] = humidity
 
     #read distance
+    
     msgDistance = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
     msgDistance["sensor_name"] = "distance"
-    msgDistance["sensor_value"] = readDistance()
+    msgDistance["sensor_value"] = readDistance(PIN_TRIGGER, PIN_ECHO)
 
     return msgDHT22_temperature, msgDHT22_humidity, msgDistance
 
@@ -49,7 +58,7 @@ def createMessage():
 def readDHT22():
     print("Function readDHT22")
     #definire il pin del sensore DHT22
-    DHT22_pin = 12 #GPIO12
+    DHT22_pin = PIN_DHT22 #GPIO12
     #definire il tipo di sensore DHT22
     DHT22_sensor = dht.DHT22
     print("Reading DHT22")
@@ -62,53 +71,50 @@ def readDHT22():
     
     return humidity, temperature
         
-
+#GPIO setup fro distance sensor
 def setupGPIO(PIN_TRIGGER, PIN_ECHO):
+    
     GPIO.setmode(GPIO.BCM)
 
     GPIO.setup(PIN_TRIGGER, GPIO.OUT)
     GPIO.setup(PIN_ECHO, GPIO.IN)
-
     
-
     print("Waiting for sensor to settle")
+    time.sleep(3)
+    return 
 
-    time.sleep(2)
+def readDistance(PIN_TRIGGER, PIN_ECHO):
+    GPIO_TRIGGER = PIN_TRIGGER
+    GPIO_ECHO = PIN_ECHO
     
+        # set Trigger to HIGH
+    GPIO.output(GPIO_TRIGGER, True)
+ 
+    # set Trigger after 0.01ms to LOW
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+ 
+    StartTime = time.time()
+    StopTime = time.time()
+ 
+    # save StartTime
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+ 
+    # save time of arrival
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+ 
+    # time difference between start and arrival
+    TimeElapsed = StopTime - StartTime
+    # multiply with the sonic speed (34300 cm/s)
+    # and divide by 2, because there and back
+    distance = (TimeElapsed * 34300) / 2
 
-def readDistance():
-    try:
-        PIN_TRIGGER = 16
-        PIN_ECHO = 26
-        
-        GPIO.output(PIN_TRIGGER, GPIO.LOW)
-
-        GPIO.output(PIN_TRIGGER, GPIO.HIGH)
-
-        time.sleep(0.00001)
-
-        GPIO.output(PIN_TRIGGER, GPIO.LOW)
-
-        pulse_start_time = 0
-        pulse_end_time = 0
-
-        print("Calculating distance")        
-
-        while GPIO.input(PIN_ECHO)==0:
-            print("ECHO = 0")
-            pulse_start_time = time.time()
-        while GPIO.input(PIN_ECHO)==1:
-            print("ECHO = 1")
-            pulse_end_time = time.time()
-
-        pulse_duration = pulse_end_time - pulse_start_time
-        distance = round(pulse_duration * 17150, 2)
-        print ("Distance: ",distance," cm")
-
-        return distance
-    finally:
-        print("Read done")
-        #GPIO.cleanup()
+    print("Distance: {:.2f} cm".format(distance))
+    return distance
+ 
+  
 
 #comunication functions
 def ethernet_mode(ethernet_address,ethernet_port):
@@ -186,7 +192,7 @@ def infrared_mode():
     print("WARNING: IR hardware must used in dark environment")
     print("Press Ctrl+C to exit")
     #instantiate the piir class and start the loop (at the moment we don't know what light.json file is)
-    remote = piir.Remote('light.json', 17)
+    remote = piir.Remote('light.json', INFRARED_PIN)
 
     #TODO DA TESTARE SE POSSIBILE INVIARE TOKEN IN AMBIENTE CON POCHE INTERFERENZE
 
@@ -196,7 +202,8 @@ def infrared_mode():
 
         #send messages
         #temperture dictionary
-        remote.send_data(bytes(msgDHT22_temperature["sensor_token"], 'utf-8'))
+        
+        '''remote.send_data(bytes(msgDHT22_temperature["sensor_token"], 'utf-8'))
         time.sleep(0.5)
         remote.send_data(bytes(msgDHT22_temperature["sensor_name"], 'utf-8'))
         time.sleep(0.5)
@@ -220,7 +227,10 @@ def infrared_mode():
         time.sleep(0.5)
         remote.send_data(bytes(str(msgDistance["sensor_value"]), 'utf-8'))
         time.sleep(0.5)
-        print("Sent: {}".format(msgDistance))
+        print("Sent: {}".format(msgDistance))'''
+
+        remote.send_data(bytes(msgDHT22_temperature["sensor_name"]+","+ str(msgDHT22_temperature["sensor_value"]), 'utf-8'))
+        time.sleep(0.5)
 
         #wait for a while
         time.sleep(5)
@@ -245,7 +255,7 @@ def load_token_dict_from_file():
         csv_reader = csv.reader(csv_file, delimiter=',')
         print("Sensors list:")
         for row in csv_reader:
-            token_dict[row[0]] = row[1]
+            token_dict[row[1]] = row[0]
             print(f'\tSensor token: {row[0]} Sensor Name: {row[1]}')
     return token_dict
 
@@ -258,10 +268,12 @@ def main():
 
     #reading token list from file
     token_dict = load_token_dict_from_file()
+    print("token_dict: {}".format(token_dict))
+
+    #GPIO setup
+    setupGPIO(PIN_TRIGGER, PIN_ECHO)
 
     
-
-
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
         print("Usage: python sender.py <mode>\nMode can be: ethernet, serial or infrared")
@@ -279,9 +291,8 @@ def main():
     #set pin
     try:
         #setup the GPIO pins
-        PIN_TRIGGER = 16
-        PIN_ECHO = 26
-        setupGPIO(PIN_TRIGGER, PIN_ECHO)
+        
+       
 
         #execute the current mode
         if(mode == "ethernet"):
