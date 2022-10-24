@@ -34,28 +34,42 @@ INFRARED_PIN = 0
 
 #DHT22 spin config
 PIN_DHT22 = 0
+#ethernet config
+PORT = 0
+ADDRESS = None
 
-#config pin for sensor
+#config pin for sensor (but also for ethernet despite the name)
 def config_pin():
+    #check in config file exist
+    if not os.path.isfile("config/config.json"):
+        print("Config file not found. It should be in config/config.json")
+        sys.exit(1)
+
     #load pin from conf_sender.json
-    with open('conf_sender.json', 'r') as f:
+    with open('config/conf_sender.json', 'r') as f:
         data = json.load(f)
 
     #DHT22 spin config
     PIN_DHT22 = data["DHT22_sensor"]["PIN_DHT22"]
-    print(PIN_DHT22)
+   
 
     #distance sensor config
     PIN_TRIGGER = data["distance_sensor"]["PIN_TRIGGER"]
     PIN_ECHO = data["distance_sensor"]["PIN_ECHO"]
 
-    print(PIN_TRIGGER)
-    print(PIN_ECHO)
-
+  
     #infared sender pin config
     INFRARED_PIN = data["infrared_sensor"]["INFRARED_PIN"]
-    print(INFRARED_PIN)
+   
+    #ethernet config (of the receiver)
+    PORT = data["ethernet"]["PORT"]
+    ADDRESS = data["ethernet"]["ADDRESS"]
     
+    print("config done: ")
+    print("DHT22 pin: ", PIN_DHT22)
+    print("distance sensor pin (trigger,echo): ", PIN_TRIGGER, PIN_ECHO)
+    print("infrared pin: ", INFRARED_PIN)
+    print("ethernet address - port: ",ADDRESS, PORT)
 
 def createMessage():
     #read DHT22
@@ -216,7 +230,7 @@ def infrared_mode():
     print("WARNING: IR hardware must used in dark environment")
     print("Press Ctrl+C to exit")
     #instantiate the piir class and start the loop (at the moment we don't know what light.json file is)
-    remote = piir.Remote('light.json', INFRARED_PIN)
+    remote = piir.Remote('config/light.json', INFRARED_PIN)
 
     #TODO DA TESTARE SE POSSIBILE INVIARE TOKEN IN AMBIENTE CON POCHE INTERFERENZE
 
@@ -289,7 +303,7 @@ def random_sensor_value():
 #return a dictionary with "token":"sensor_name" entry based on file token.txt (but it's a CSV file)
 #token is the first column of the CSV file with column token,sensor_name
 def load_token_dict_from_file():
-    with open('token.txt') as csv_file:
+    with open('config/token.txt') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         print("Sensors list:")
         for row in csv_reader:
@@ -315,20 +329,20 @@ def main():
     print("Hello World - I'm the sender in mode: " + mode)
 
     #ip address and port for ethernet mode
-    ethernet_address = "192.168.10.12" #the local ip address of the receiver
-    ethernet_port = 50000
+    ethernet_address = ADDRESS #the local ip address of the receiver
+    ethernet_port = PORT
 
     #reading token list from file
     token_dict = load_token_dict_from_file()
     print("token_dict: {}".format(token_dict))
 
+    #config sensors pins
+    config_pin()
+
     #GPIO setup for distance sensor
     setupGPIO(PIN_TRIGGER, PIN_ECHO)
 
-    #config pin snesor
-    config_pin()
-
-
+    
     #set pin
     try:
         #setup the GPIO pins
