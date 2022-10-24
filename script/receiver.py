@@ -20,6 +20,9 @@ import serial
 from curses import keyname
 from piir.io import receive
 from piir.decode import decode
+import hashlib
+  
+
 
 from piir.prettify import prettify
 
@@ -125,15 +128,14 @@ def infrared_mode():
     
     keys = {}
     token_dict = load_token_dict_from_file()
-    cont = 0
-    error = False
+   
     while True:
         try:
            
-            data = decode(receive(220))
+            data = decode(receive(22))
+            
             if data:
-                cont = cont + 1
-
+                
 
                 keys['keyname'] = data
 
@@ -143,39 +145,39 @@ def infrared_mode():
                 #print (prettified_data["keys"]['keyname'])
                 hex_data = prettified_data["keys"]['keyname']
                 string_received = bytes.fromhex(hex_data).decode('utf-8')
+                print("ricevuto"+string_received)
                 
                 string_array = string_received.split(sep=",")
                 sensor_name = string_array[0]
                 sensor_value = string_array[1]
-                hash = string_array[2]
+                my_hash = string_array[2]
                 
                 #check hash
-                string = sensor_name + "," + sensor_value
-                if string == hash:
+                string_da_verificare = sensor_name + "," + sensor_value
+                # encoding GeeksforGeeks using md5 hash
+                # function 
+                result = hashlib.md5(string_da_verificare.encode("utf-8"))
+                result = str(result.digest())
+                result = result[:5]
+                # printing the equivalent byte value.
+               
+                if result == result:
                     #Hash verificato
                     print("Hash verified. sensor name: {}, sensor value {}".format(sensor_name,sensor_value) )
                     sensor_token = token_dict[sensor_name]
 
-                    value_dictionary = {}
-                    value_dictionary["sensor_name"] = sensor_name
-                    value_dictionary["sensor_value"] = sensor_value
+                    #Creazione del JSON
+                    msg = {"sensorName": sensor_name, "sensorValue": sensor_value}
+                   
 
-                    #send to thingsboard
-                    rest_to_thingboard(sensor_token,value_dictionary)
+                    #send JSON to Thingsboard with HTTP REST API (using the utility function)
+                    #reading thingboard token and remove it's key from the message
+                  
+                    rest_to_thingboard(sensor_token,msg)
                 else:
                     print("hash not verified")
 
-                print(string_name)
-            #Creazione del JSON
-            msg = {"sensorName": sensorName, "sensorValue": sensorValue, "sensorToken": token_dict[sensorName]}
-            print("Messagge received successully!")
-            print(msg)
-
-            #send JSON to Thingsboard with HTTP REST API (using the utility function)
-            #reading thingboard token and remove it's key from the message
-            token = msg["sensor_token"]
-            del msg["sensor_token"]
-            #rest_to_thingboard(token,msg)
+                
         except Exception as e:
             print("Error: {}".format(e))
             print("Message not received")
