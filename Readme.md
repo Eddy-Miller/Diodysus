@@ -92,5 +92,5 @@ Fatti profili dei device, upload rule chain.
 è da creare la dashboard con gli alias ma serve prima far arrivare dei dati 
 fare la dashboard
 
-![alt text](https://github.com/[Eddy-miller]/[Diodysus]/blob/[branch]/rulechain.jpg?raw=true)
+![alt text](https://github.com/[Eddy-miller]/[Diodysus/script/images]/blob/[branch]/rulechain.jpg?raw=true)
 
