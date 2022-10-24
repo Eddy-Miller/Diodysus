@@ -1,11 +1,12 @@
 # Diodysus
-NOTA: README da aggiornare in base alle nuove scelte effettuate
+NOTA: README da aggiornare in base alle nuove scelte effettuate 
 
-Un progetto che non mi pento di definire BELLO
+ \\TODO: togliere il try catch con l'eccezione message not received ed errore generico di rest_to_thongsboard
+ 
 
 Posizionarsi nella cartella del progetto
 
-SERIALE FUNZIONALITA' TESTATE: 100%
+FUNZIONALITA' TESTATE: ETH, SER, INFRARED 
 
 //TODO: testing eth e infra 
 
