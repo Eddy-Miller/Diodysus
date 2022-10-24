@@ -1,14 +1,13 @@
 # Diodysus
 NOTA: README da aggiornare in base alle nuove scelte effettuate 
 
- \\TODO: togliere il try catch con l'eccezione message not received ed errore generico di rest_to_thongsboard
+ //TODO: togliere il try catch con l'eccezione message not received ed errore generico di rest_to_thongsboard
  
 
 Posizionarsi nella cartella del progetto
 
 FUNZIONALITA' TESTATE: ETH, SER, INFRARED 
 
-//TODO: testing eth e infra 
 
 ## Telegram Bot @diodysusbot
 Inizializzazione dell'ambiente virtuale per il bot telegram
