@@ -18,6 +18,7 @@ import RPi.GPIO as GPIO
 import time
 import Adafruit_DHT as dht
 import hashlib, json
+import requests
 
 
 #global variable and costants
@@ -37,6 +38,12 @@ PIN_DHT22 = 0
 #ethernet config
 PORT = 0
 ADDRESS = None
+
+#Thingsboard config
+#thingsboard parameters
+tb_protocol = "http"
+tb_port = "8080"
+tb_address = "localhost"
 
 #config pin for sensor (but also for ethernet despite the name)
 def config_pin():
@@ -299,6 +306,31 @@ def random_sensor_value():
     msg["sensor_name"] = token_dict[token]
 
     return msg
+
+
+#utility functions
+def rest_to_thingboard(token,message):
+    
+    #url building and HTTP header settings
+    url = f"{tb_protocol}://{tb_address}:{tb_port}/api/v1/{token}/telemetry"
+    header = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+   
+    try:
+        while True:
+            #JSON conversion
+            data_json = json.dumps(message)
+            #HTTP request
+            http_response = requests.post(url=url,data=data_json,headers=header)
+            
+            if http_response.status_code == 200:
+                print(f"send data to ThingsBoard: {data_json}")
+                return 0
+    except requests.exceptions.ConnectionError as e:
+        print("Request Exception", e)
+    except KeyboardInterrupt:
+     pass
+    except Exception as e:
+        print("General Exception: ", e)
 
 #return a dictionary with "token":"sensor_name" entry based on file token.txt (but it's a CSV file)
 #token is the first column of the CSV file with column token,sensor_name
