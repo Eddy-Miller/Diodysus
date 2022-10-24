@@ -87,3 +87,8 @@ ip_b interno: 192.168.1.16
 
 ES: comando per collegarsi <ssh pi_a@79.10.213.121 -p 2221>
 
+# Thingsboard
+Fatti profili dei device, upload rule chain.
+è da creare la dashboard con gli alias ma serve prima far arrivare dei dati 
+fare la dashboard
+
