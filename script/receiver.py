@@ -154,7 +154,7 @@ def infrared_mode():
                 
                 #check hash
                 string_da_verificare = sensor_name + "," + sensor_value
-                # encoding GeeksforGeeks using md5 hash
+            
                 # function 
                 result = hashlib.md5(string_da_verificare.encode("utf-8"))
                 result = str(result.digest())
