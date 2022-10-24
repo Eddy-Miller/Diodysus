@@ -130,7 +130,7 @@ def infrared_mode():
     while True:
         try:
            
-            data = decode(receive(22))
+            data = decode(receive(220))
             if data:
                 cont = cont + 1
 
@@ -142,13 +142,29 @@ def infrared_mode():
                 prettified_data =prettify(keys)
                 #print (prettified_data["keys"]['keyname'])
                 hex_data = prettified_data["keys"]['keyname']
-                string_name = bytes.fromhex(hex_data).decode('utf-8')
-                if cont == 0:
-                    sensorToken = string_name
-                if cont == 1 :
-                    sensorName = string_name
-                if cont == 2 :
-                    sensorValue = string_name
+                string_received = bytes.fromhex(hex_data).decode('utf-8')
+                
+                string_array = string_received.split(sep=",")
+                sensor_name = string_array[0]
+                sensor_value = string_array[1]
+                hash = string_array[2]
+                
+                #check hash
+                string = sensor_name + "," + sensor_value
+                if string == hash:
+                    #Hash verificato
+                    print("Hash verified. sensor name: {}, sensor value {}".format(sensor_name,sensor_value) )
+                    sensor_token = token_dict[sensor_name]
+
+                    value_dictionary = {}
+                    value_dictionary["sensor_name"] = sensor_name
+                    value_dictionary["sensor_value"] = sensor_value
+
+                    #send to thingsboard
+                    rest_to_thingboard(sensor_token,value_dictionary)
+                else:
+                    print("hash not verified")
+
                 print(string_name)
             #Creazione del JSON
             msg = {"sensorName": sensorName, "sensorValue": sensorValue, "sensorToken": token_dict[sensorName]}
