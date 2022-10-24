@@ -1,13 +1,13 @@
 # Diodysus
-NOTA: README da aggiornare in base alle nuove scelte effettuate
+NOTA: README da aggiornare in base alle nuove scelte effettuate 
 
-Un progetto che non mi pento di definire BELLO
+ //TODO: togliere il try catch con l'eccezione message not received ed errore generico di rest_to_thongsboard
+ 
 
 Posizionarsi nella cartella del progetto
 
-SERIALE FUNZIONALITA' TESTATE: 100%
+FUNZIONALITA' TESTATE: ETH, SER, INFRARED 
 
-//TODO: testing eth e infra 
 
 ## Telegram Bot @diodysusbot
 Inizializzazione dell'ambiente virtuale per il bot telegram
@@ -86,4 +86,11 @@ ip_a interno: 192.168.1.15
 ip_b interno: 192.168.1.16  
 
 ES: comando per collegarsi <ssh pi_a@79.10.213.121 -p 2221>
+
+# Thingsboard
+Fatti profili dei device, upload rule chain.
+è da creare la dashboard con gli alias ma serve prima far arrivare dei dati 
+fare la dashboard
+
+![My Image](script/images/rulechain.jpg)
 
