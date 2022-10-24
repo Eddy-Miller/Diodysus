@@ -17,38 +17,62 @@ from pickle import TRUE
 import RPi.GPIO as GPIO
 import time
 import Adafruit_DHT as dht
-import hashlib
+import hashlib, json
 
 
 #global variable and costants
 MODE_LIST = ["ethernet", "serial", "infrared"]
 #dictionary with token:sensor_name entry (load from file token.txt)
 token_dict = {}
-#distacne sensor config
-PIN_TRIGGER = 13
-PIN_ECHO = 26
-#infared pin config
-INFRARED_PIN = 17
-#DHT22 spin config
-PIN_DHT22 = 12
 
+#distance sensor config
+PIN_TRIGGER = 0
+PIN_ECHO = 0
+
+#infared sender pin config
+INFRARED_PIN = 0
+
+#DHT22 spin config
+PIN_DHT22 = 0
+
+#config pin for sensor
+def config_pin():
+    #load pin from conf_sender.json
+    with open('conf_sender.json', 'r') as f:
+        data = json.load(f)
+
+    #DHT22 spin config
+    PIN_DHT22 = data["DHT22_sensor"]["PIN_DHT22"]
+    print(PIN_DHT22)
+
+    #distance sensor config
+    PIN_TRIGGER = data["distance_sensor"]["PIN_TRIGGER"]
+    PIN_ECHO = data["distance_sensor"]["PIN_ECHO"]
+
+    print(PIN_TRIGGER)
+    print(PIN_ECHO)
+
+    #infared sender pin config
+    INFRARED_PIN = data["infrared_sensor"]["INFRARED_PIN"]
+    print(INFRARED_PIN)
+    
 
 def createMessage():
     #read DHT22
     humidity, temperature = readDHT22()
     msgDHT22_temperature = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_temperature": "sensor_value_placeholder" }
-    msgDHT22_temperature["sensor_name"] = "DHT22_temperature"
-    msgDHT22_temperature["sensor_value"] = temperature
+    msgDHT22_temperature["sensor_name"] = "T"
+    msgDHT22_temperature["sensor_value"] = int(temperature)
 
     msgDHT22_humidity = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_humidity": "sensor_value_placeholder" }
-    msgDHT22_humidity["sensor_name"] = "DHT22_humidity"
-    msgDHT22_humidity["sensor_value"] = humidity
+    msgDHT22_humidity["sensor_name"] = "H"
+    msgDHT22_humidity["sensor_value"] = int(humidity)
 
     #read distance
     
     msgDistance = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
-    msgDistance["sensor_name"] = "distance"
-    msgDistance["sensor_value"] = readDistance(PIN_TRIGGER, PIN_ECHO)
+    msgDistance["sensor_name"] = "D"
+    msgDistance["sensor_value"] = int(readDistance(PIN_TRIGGER, PIN_ECHO))
 
     return msgDHT22_temperature, msgDHT22_humidity, msgDistance
 
@@ -229,9 +253,23 @@ def infrared_mode():
         time.sleep(0.5)
         print("Sent: {}".format(msgDistance))'''
 
-        remote.send_data(bytes(msgDHT22_temperature["sensor_name"]+","+ str(msgDHT22_temperature["sensor_value"]), 'utf-8'))
+        str_msgDHT22_temperature = msgDHT22_temperature["sensor_name"]+","+ str(msgDHT22_temperature["sensor_value"])
+        hash_str_msgDHT22_temperature = str(hashlib.md5(str_msgDHT22_temperature.encode()).hexdigest())
+        remote.send_data(bytes(str_msgDHT22_temperature+","+hash_str_msgDHT22_temperature[:5], 'utf-8'))
+        print("Sent: {}".format(str_msgDHT22_temperature+","+hash_str_msgDHT22_temperature[:5]))
+        time.sleep(0.5)
+        
+        str_msgDHT22_humidity = msgDHT22_humidity["sensor_name"]+","+ str(msgDHT22_humidity["sensor_value"])
+        hash_str_msgDHT22_humidity = str(hashlib.md5(str_msgDHT22_humidity.encode()).hexdigest())
+        remote.send_data(bytes(str_msgDHT22_humidity+","+hash_str_msgDHT22_humidity[:5], 'utf-8'))
+        print("Sent: {}".format(str_msgDHT22_humidity+","+hash_str_msgDHT22_humidity[:5]))
         time.sleep(0.5)
 
+        str_msgDistance = msgDistance["sensor_name"]+","+ str(msgDistance["sensor_value"])
+        hash_str_msgDistance = str(hashlib.md5(str_msgDistance.encode()).hexdigest())
+        remote.send_data(bytes(str_msgDistance+","+hash_str_msgDistance[:5], 'utf-8'))
+        print("Sent: {}".format(str_msgDistance+","+hash_str_msgDistance[:5]))
+        time.sleep(0.5)
         #wait for a while
         time.sleep(5)
 
@@ -262,18 +300,7 @@ def load_token_dict_from_file():
 
 def main():
 
-    #ip address and port for ethernet mode
-    ethernet_address = "192.168.10.12" #the local ip address of the receiver
-    ethernet_port = 50000
-
-    #reading token list from file
-    token_dict = load_token_dict_from_file()
-    print("token_dict: {}".format(token_dict))
-
-    #GPIO setup
-    setupGPIO(PIN_TRIGGER, PIN_ECHO)
-
-    
+        
     #check number of arguments equal to 2
     if len(sys.argv) != 2:
         print("Usage: python sender.py <mode>\nMode can be: ethernet, serial or infrared")
@@ -286,6 +313,20 @@ def main():
     
     mode = sys.argv[1]
     print("Hello World - I'm the sender in mode: " + mode)
+
+    #ip address and port for ethernet mode
+    ethernet_address = "192.168.10.12" #the local ip address of the receiver
+    ethernet_port = 50000
+
+    #reading token list from file
+    token_dict = load_token_dict_from_file()
+    print("token_dict: {}".format(token_dict))
+
+    #GPIO setup for distance sensor
+    setupGPIO(PIN_TRIGGER, PIN_ECHO)
+
+    #config pin snesor
+    config_pin()
 
 
     #set pin

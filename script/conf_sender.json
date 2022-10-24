@@ -1,0 +1,12 @@
+{
+    "DHT22_sensor" : {
+        "PIN_DHT22" : 12
+    },
+    "infrared_sensor" : {
+        "INFRARED_PIN" : 17
+    },
+    "distance_sensor" : {
+        "PIN_TRIGGER" : 13,
+        "PIN_ECHO" : 26
+    }
+}
