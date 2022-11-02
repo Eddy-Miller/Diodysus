@@ -2,6 +2,16 @@
 
 
 
+
+
+# Thingsboard
+
+## Rule Chain 
+![My Image](script/images/rc.png)
+
+## Dashboard
+![My Image](script/images/dash.png)
+
 ## Info raspberry
 
 Pi_a
@@ -37,12 +47,3 @@ ip_a interno: 192.168.1.15
 ip_b interno: 192.168.1.16  
 
 ES: comando per collegarsi <ssh pi_a@79.10.213.121 -p 2221>
-
-# Thingsboard
-
-## Rule Chain 
-![My Image](script/images/rc.png)
-
-## Dashboard
-![My Image](script/images/dash.png)
-
