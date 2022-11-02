@@ -1,0 +1,5 @@
+{
+    "infrared_sensor" : {
+        "INFRARED_PIN" : 22
+    }
+}

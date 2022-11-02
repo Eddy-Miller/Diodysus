@@ -9,7 +9,7 @@
         "PIN_TRIGGER" : 13,
         "PIN_ECHO" : 26
     },
-    "ethernet" : {
+    "ethernet_mode" : {
          "PORT" : "50000",
          "ADDRESS" :"192.168.10.12"
     }
