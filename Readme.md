@@ -1,6 +1,7 @@
 # Diodysus
 
-
+## Architettura del diodo dati
+![My Image](script/images/Immagine 2022-11-02 142724.png)
 
 
 
