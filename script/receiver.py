@@ -5,11 +5,7 @@ Legge i dati ricevuti dal RASP A e li invio a Thingsboard usando le API REST
 Ethernet mode:
 legge da socket UDP e costruisce un JSON per ogni messaggio 
 
-TODO: il server UPD è sequenziale, quindi non è possibile gestire più richieste contemporaneamente
-anche se si connette un solo client quindi può andare bene anche così
-
 '''
-
 
 #import
 import random, socket, os , sys, time, json, requests
@@ -34,6 +30,21 @@ MODE_LIST = ["ethernet", "serial", "infrared"]
 tb_protocol = "http"
 tb_port = "8080"
 tb_address = "localhost"
+
+#infared sender pin config
+INFRARED_PIN = 0
+
+def config_pin():
+
+    #open json file in read mode
+    with open('config/conf_receiver.json', 'r') as f:
+        data = json.load(f)
+
+    #infared sender pin config
+    global INFRARED_PIN
+    INFRARED_PIN = data["infrared_sensor"]["INFRARED_PIN"]
+    print(INFRARED_PIN)
+
 
 #return a dictionary with "token":"sensor_name" entry based on file token.txt (but it's a CSV file)
 #token is the first column of the CSV file with column token,sensor_name
