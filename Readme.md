@@ -40,6 +40,9 @@ ES: comando per collegarsi <ssh pi_a@79.10.213.121 -p 2221>
 
 # Thingsboard
 
+## Rule Chain 
+![My Image](script/images/rc.jpg)
 
-![My Image](script/images/rulechain.jpg)
+## Dashboard
+![My Image](script/images/dash.jpg)
 
