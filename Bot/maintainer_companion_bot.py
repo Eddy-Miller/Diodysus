@@ -407,7 +407,7 @@ def get_telemetry(update: Update, context: CallbackContext):
 
         else:
             # Get authorization token
-            url = 'http://localhost:9090/api/auth/login'
+            url = 'http://localhost:8080/api/auth/login'
             body = {
                     "username": "tenant@thingsboard.org",
                     "password": "tenant"
@@ -417,7 +417,7 @@ def get_telemetry(update: Update, context: CallbackContext):
             token = response.json()["token"]   
 
             # Get tenant's devices
-            url = 'http://localhost:9090/api/tenant/devices?pageSize=100&page=0'
+            url = 'http://localhost:8080/api/tenant/devices?pageSize=100&page=0'
 
             response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
 
@@ -715,7 +715,7 @@ def choosing_device(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
     # Get authorization token
-    url = 'http://localhost:9090/api/auth/login'
+    url = 'http://localhost:8080/api/auth/login'
     body = {
             "username": "tenant@thingsboard.org",
             "password": "tenant"
@@ -725,19 +725,19 @@ def choosing_device(update: Update, context: CallbackContext):
     token = response.json()["token"]   
 
     # Get device telemetry
-    url = f'http://localhost:9090/api/tenant/devices?deviceName={choice}'
+    url = f'http://localhost:8080/api/tenant/devices?deviceName={choice}'
     response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
     id = response.json()["id"]["id"]
 
 
     current_time_ms = int(time.time()*1000)
     one_month_ago = current_time_ms - MONTH_MS
-    url = f'http://localhost:9090/api/plugins/telemetry/DEVICE/{id}/values/timeseries?keys=value&startTs={one_month_ago}&endTs={current_time_ms}'
+    url = f'http://localhost:8080/api/plugins/telemetry/DEVICE/{id}/values/timeseries?keys=sensor_value&startTs={one_month_ago}&endTs={current_time_ms}'
     response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
     
     # Create and send reply text
     reply_text = "Fetched telemetry:\n"
-    for telemetry in response.json()["value"]:
+    for telemetry in response.json()["sensor_value"]:
         reply_text += str(datetime.datetime.fromtimestamp(telemetry["ts"] / 1000))
         reply_text += ': ' + str(telemetry["value"]) + '\n'
 
@@ -766,7 +766,7 @@ def choosing_level(update: Update, context: CallbackContext):
         return ConversationHandler.END
 
     # Get authorization token
-    url = 'http://localhost:9090/api/auth/login'
+    url = 'http://localhost:8080/api/auth/login'
     body = {
             "username": "tenant@thingsboard.org",
             "password": "tenant"
@@ -777,7 +777,7 @@ def choosing_level(update: Update, context: CallbackContext):
 
     # Get alarms
 
-    url = f'http://localhost:9090/api/alarms?pageSize=300&page=0&sortOrder=DESC&sortProperty=createdTime'
+    url = f'http://localhost:8080/api/alarms?pageSize=300&page=0&sortOrder=DESC&sortProperty=createdTime'
     response = requests.get(url, headers={"Content-Type":"application/json", "X-Authorization" : f"Bearer {token}"})
 
     reply_text = "Fetched alarms:\n"

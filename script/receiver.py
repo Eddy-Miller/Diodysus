@@ -77,7 +77,7 @@ def ethernet_mode(ethernet_address, ethernet_port):
         message_json = json.loads(message)
         
         #reading thingboard token and remove it's key from the message
-        token = message_json["sensor_token"]
+        token = token_dict[message_json["sensor_name"]]
         del message_json["sensor_token"]
        
         
@@ -112,7 +112,7 @@ def serial_mode():
         message_json = json.loads(message)
         
         #reading thingboard token and remove it's key from the message
-        token = message_json["sensor_token"]
+        token = token_dict[message_json["sensor_name"]]
         del message_json["sensor_token"]
 
         #print(message_json)
@@ -167,7 +167,7 @@ def infrared_mode():
                     sensor_token = token_dict[sensor_name]
 
                     #Creazione del JSON
-                    msg = {"sensorName": sensor_name, "sensorValue": sensor_value}
+                    msg = {"sensor_name": sensor_name, "sensor_value": sensor_value}
                    
 
                     #send JSON to Thingsboard with HTTP REST API (using the utility function)
