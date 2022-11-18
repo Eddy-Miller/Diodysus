@@ -89,7 +89,7 @@ def createMessage():
     msgDHT22_temperature["sensor_value"] = int(temperature)
 
     to_thingsboard_dict = {"sensor_name":msgDHT22_temperature["sensor_name"], "sensor_value":int(temperature)}
-    rest_to_thingboard(token_dict[msgDHT22_temperature["sensor_name"]], to_thingsboard_dict)
+    rest_to_thingsboard(token_dict[msgDHT22_temperature["sensor_name"]], to_thingsboard_dict)
 
     msgDHT22_humidity = {"sensor_token":"token_placeholter", "sensor_name": "sensor_name_placeholder", "sensor_value": "sensor_value_placeholder" }
     msgDHT22_humidity["sensor_name"] = "H"
@@ -97,7 +97,7 @@ def createMessage():
     msgDHT22_humidity["sensor_value"] = int(humidity)
 
     to_thingsboard_dict = {"sensor_name":msgDHT22_humidity["sensor_name"], "sensor_value":int(humidity)}
-    rest_to_thingboard(token_dict[msgDHT22_humidity["sensor_name"]], to_thingsboard_dict)
+    rest_to_thingsboard(token_dict[msgDHT22_humidity["sensor_name"]], to_thingsboard_dict)
 
 
     #read distance
@@ -109,7 +109,7 @@ def createMessage():
     msgDistance["sensor_value"] = distance
 
     to_thingsboard_dict = {"sensor_name":msgDistance["sensor_name"], "sensor_value":int(distance)}
-    rest_to_thingboard(token_dict[msgDistance["sensor_name"]], to_thingsboard_dict)
+    rest_to_thingsboard(token_dict[msgDistance["sensor_name"]], to_thingsboard_dict)
 
     return msgDHT22_temperature, msgDHT22_humidity, msgDistance
 
@@ -299,7 +299,7 @@ def random_sensor_value():
     return msg
 
 
-def rest_to_thingboard(token,message):
+def rest_to_thingsboard(token,message):
     
     #url building and HTTP header settings
     url = f"{tb_protocol}://{tb_address}:{tb_port}/api/v1/{token}/telemetry"

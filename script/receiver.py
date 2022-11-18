@@ -93,7 +93,7 @@ def ethernet_mode(ethernet_address, ethernet_port):
        
         
         #send JSON to Thingsboard with HTTP REST API (using the utility function)
-        rest_to_thingboard(token,message_json)
+        rest_to_thingsboard(token,message_json)
 
 
 def serial_mode():
@@ -129,7 +129,7 @@ def serial_mode():
         #print(message_json)
        
         #send JSON to Thingsboard with HTTP REST API (using the utility function)
-        rest_to_thingboard(token,message_json) 
+        rest_to_thingsboard(token,message_json) 
 
 def infrared_mode():
     print("Infrared mode - reliability not guaranteed")
@@ -184,7 +184,7 @@ def infrared_mode():
                     #send JSON to Thingsboard with HTTP REST API (using the utility function)
                     #reading thingboard token and remove it's key from the message
                   
-                    rest_to_thingboard(sensor_token,msg)
+                    rest_to_thingsboard(sensor_token,msg)
                 else:
                     print("hash not verified")
 
@@ -195,7 +195,7 @@ def infrared_mode():
             continue
 
 #utility functions
-def rest_to_thingboard(token,message):
+def rest_to_thingsboard(token,message):
     
     #url building and HTTP header settings
     url = f"{tb_protocol}://{tb_address}:{tb_port}/api/v1/{token}/telemetry"
