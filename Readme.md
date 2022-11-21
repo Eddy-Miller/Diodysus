@@ -1,4 +1,7 @@
 # Diodysus
+Prototipo di diodo dati per il **Laboratorio di Industria 4.0** dell'Università degli Studi di Ferrara.  
+Realizzato da: Ion Boleac, Lorenzo Colombi, Edoardo di Caro, Elena Mari e Michela Vespa
+
 
 ## Diodysus - Smart Winery Secure System
 ### Introduzione
