@@ -21,7 +21,7 @@ Ciò consente ai viticoltori di monitorare in tempo reale lo stato di ogni botte
 # Thingsboard
 
 ## Rule Chain 
-![My Image](script/images/rc.png)
+![My Image](script/images/final.png)
 
 ## Dashboard
 ![My Image](script/images/dash.png)
