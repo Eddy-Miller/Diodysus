@@ -35,16 +35,4 @@ Pi_b
 -password Postgres : AdminPi_b
 
 
-CONNESSIONE DA REMOTO:
 
-IP pubblico: 79.10.213.121  
-SSH porta Pi_a: 2221  
-SSH porta Pi_b: 2222   
-Thingboard porta Pi_a: 8081  
-Thingboard porta Pi_a: 8082  
-
-
-ip_a interno: 192.168.1.15   
-ip_b interno: 192.168.1.16  
-
-ES: comando per collegarsi <ssh pi_a@79.10.213.121 -p 2221>
